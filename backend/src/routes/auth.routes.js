@@ -17,6 +17,12 @@ AuthRouter.post('/register', registerUser);
  * @data : { email, password }
  */
 AuthRouter.post('/login', loginUser);
+
+/**
+ * @API /api/auth/logout
+ * @desc Logout user by clearing JWT token cookie
+ * @access Public
+ */
 AuthRouter.post('/logout', logoutUser);
  
 

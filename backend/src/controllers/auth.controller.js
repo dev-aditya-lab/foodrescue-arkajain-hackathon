@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import userModel from '../model/user.model';
-import { JWT_SECRET } from '../config/env.config';
+import userModel from '../model/user.model.js';
+import { JWT_SECRET } from '../config/env.config.js';
 
 export async function registerUser(req, res){
     //  * @data : { name, phone, email, password, role, providerType (if provider), location, organizationName (if NGO) }
