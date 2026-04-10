@@ -5,7 +5,7 @@ import FoodCard from "@/components/FoodCard";
 import FilterBar from "@/components/FilterBar";
 import { mockFoodItems } from "@/lib/mockData";
 
-export default function DashboardPage() {
+export default function AllFoodsPage() {
   const [filters, setFilters] = useState({
     distance: null,
     expiry: "all",

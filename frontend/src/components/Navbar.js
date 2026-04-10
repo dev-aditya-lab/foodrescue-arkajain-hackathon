@@ -8,7 +8,7 @@ import { useCart } from "@/context/CartContext";
 
 const navItems = [
   { label: "Home", path: "/" },
-  { label: "Dashboard", path: "/dashboard" },
+  { label: "Foods", path: "/all-foods" },
   { label: "Add Food", path: "/add-food" },
   { label: "Map", path: "/map" },
 ];
