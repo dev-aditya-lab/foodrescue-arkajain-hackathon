@@ -61,7 +61,7 @@ export default function FoodCard({
     <Link href={`/food/${id}`} className="block group">
       <div className="glass-card overflow-hidden h-full flex flex-col">
         {/* Image Area */}
-        <div className="w-full h-44 bg-gradient-to-br from-primary/8 to-secondary/8 flex items-center justify-center relative overflow-hidden">
+        <div className="w-full h-44 bg-linear-to-br from-primary/8 to-secondary/8 flex items-center justify-center relative overflow-hidden">
           {image ? (
             <img
               src={image}
@@ -104,11 +104,11 @@ export default function FoodCard({
           {/* Info Row */}
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
-              <span>{distance ? `${distance.toFixed(1)} km away` : location}</span>
+              <MapPin className="w-3.5 h-3.5 text-secondary shrink-0" />
+              <span>{Number.isFinite(distance) ? `${distance.toFixed(1)} km away` : location}</span>
             </div>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+              <Clock className="w-3.5 h-3.5 shrink-0" />
               <span>{pickupTime}</span>
             </div>
           </div>

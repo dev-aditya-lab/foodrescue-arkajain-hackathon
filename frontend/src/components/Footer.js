@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Leaf, Heart } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -9,8 +10,9 @@ export default function Footer() {
           {/* Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center">
-                <Leaf className="w-4 h-4 text-white" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-white-500 flex items-center justify-center">
+                <Image src="/logo.jpg" alt="Food Rescue Logo" width={80} height={80} className="w-full h-full rounded-xl" />
+
               </div>
               <span className="font-bold text-lg text-foreground tracking-tight">
                 Food Rescue
@@ -78,7 +80,7 @@ export default function Footer() {
         <div className="border-t border-border mt-10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} Food Rescue. All rights reserved.</p>
           <p className="flex items-center gap-1">
-            Made with <Heart className="w-3.5 h-3.5 text-destructive fill-destructive" /> for the community
+            Made with <Heart className="w-3.5 h-3.5 text-destructive fill-destructive" /> By <a href="https://github.com/dev-aditya-lab/foodrescue-arkajain-hackathon" target="_blank" className="text-orange-500 cursor-pointer hover:underline">Team Minion Prince</a>
           </p>
         </div>
       </div>

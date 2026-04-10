@@ -63,7 +63,7 @@ export async function getAvailableFoodItems(req, res) {
 
         const foodItems = await foodModel
             .find(query)
-            .populate("provider", "name email phone organizationName")
+            .populate("provider", "name email phone organizationName latitude longitude")
             .sort({ priorityScore: -1, createdAt: -1 });
 
         return res.status(200).json({ foodItems });
@@ -78,7 +78,7 @@ export async function getFoodItemById(req, res) {
         const { foodId } = req.params;
         const foodItem = await foodModel
             .findById(foodId)
-            .populate("provider", "name email phone organizationName");
+            .populate("provider", "name email phone organizationName latitude longitude");
 
         if (!foodItem) {
             return res.status(404).json({ message: "Food item not found" });

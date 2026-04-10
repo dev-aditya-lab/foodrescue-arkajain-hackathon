@@ -5,8 +5,13 @@ import FoodCard from "@/components/FoodCard";
 import FilterBar from "@/components/FilterBar";
 import { fetchFoodItems } from "@/lib/api";
 import { mapFoodFromApi } from "@/lib/foodAdapter";
+import { attachRoadDistances } from "@/lib/roadDistance";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AllFoodsPage() {
+  const { user } = useAuth();
+  const userLatitude = user?.latitude;
+  const userLongitude = user?.longitude;
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,9 +30,15 @@ export default function AllFoodsPage() {
       setError("");
       try {
         const response = await fetchFoodItems({ search: filters.search });
-        const apiItems = (response?.foodItems || [])
+        let apiItems = (response?.foodItems || [])
           .map(mapFoodFromApi)
           .filter(Boolean);
+
+        apiItems = await attachRoadDistances(apiItems, {
+          latitude: userLatitude,
+          longitude: userLongitude,
+        });
+
         if (!ignore) {
           setItems(apiItems);
         }
@@ -46,7 +57,7 @@ export default function AllFoodsPage() {
     return () => {
       ignore = true;
     };
-  }, [filters.search]);
+  }, [filters.search, userLatitude, userLongitude]);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {

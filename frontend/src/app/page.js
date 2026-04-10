@@ -6,6 +6,8 @@ import FoodCard from "@/components/FoodCard";
 import { useEffect, useRef, useState } from "react";
 import { fetchFoodItems } from "@/lib/api";
 import { mapFoodFromApi } from "@/lib/foodAdapter";
+import { attachRoadDistances } from "@/lib/roadDistance";
+import { useAuth } from "@/context/AuthContext";
 
 function AnimatedCounter({ target, suffix = "" }) {
   const [count, setCount] = useState(0);
@@ -49,6 +51,9 @@ function AnimatedCounter({ target, suffix = "" }) {
 }
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const userLatitude = user?.latitude;
+  const userLongitude = user?.longitude;
   const [featuredItems, setFeaturedItems] = useState([]);
 
   useEffect(() => {
@@ -57,10 +62,16 @@ export default function HomePage() {
     async function loadFeaturedItems() {
       try {
         const response = await fetchFoodItems();
-        const items = (response?.foodItems || [])
+        let items = (response?.foodItems || [])
           .map(mapFoodFromApi)
-          .filter(Boolean)
-          .slice(0, 4);
+          .filter(Boolean);
+
+        items = await attachRoadDistances(items, {
+          latitude: userLatitude,
+          longitude: userLongitude,
+        });
+        items = items.slice(0, 4);
+
         if (!ignore) {
           setFeaturedItems(items);
         }
@@ -75,7 +86,7 @@ export default function HomePage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [userLatitude, userLongitude]);
 
   return (
     <div className="space-y-0 pb-20">

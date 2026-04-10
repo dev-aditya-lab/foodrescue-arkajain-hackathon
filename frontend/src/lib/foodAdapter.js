@@ -18,6 +18,8 @@ export function mapFoodFromApi(item) {
     name: item.title,
     quantity: item.quantity,
     distance: null,
+    providerLatitude: item.provider?.latitude ?? null,
+    providerLongitude: item.provider?.longitude ?? null,
     expiryTime: expiryMinutes,
     location: item.location || "Location not provided",
     foodType: item.foodType,

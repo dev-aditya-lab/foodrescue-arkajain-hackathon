@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getFoodItemById } from "@/lib/api";
 import { mapFoodFromApi } from "@/lib/foodAdapter";
+import { attachRoadDistances } from "@/lib/roadDistance";
 
 export default function FoodDetailPage({ params }) {
   const resolvedParams = use(params);
@@ -25,7 +26,9 @@ export default function FoodDetailPage({ params }) {
   const [item, setItem] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const userLatitude = user?.latitude;
+  const userLongitude = user?.longitude;
   const [isAdded, setIsAdded] = useState(false);
 
   useEffect(() => {
@@ -35,7 +38,14 @@ export default function FoodDetailPage({ params }) {
       setIsLoading(true);
       try {
         const response = await getFoodItemById(id);
-        const mapped = mapFoodFromApi(response?.foodItem);
+        let mapped = mapFoodFromApi(response?.foodItem);
+        if (mapped) {
+          const [withDistance] = await attachRoadDistances([mapped], {
+            latitude: userLatitude,
+            longitude: userLongitude,
+          });
+          mapped = withDistance;
+        }
         if (!ignore) {
           setItem(mapped);
         }
@@ -54,7 +64,7 @@ export default function FoodDetailPage({ params }) {
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, userLatitude, userLongitude]);
 
   if (isLoading) {
     return <div className="max-w-2xl mx-auto px-4 py-20 text-center">Loading food item...</div>;
@@ -150,7 +160,7 @@ export default function FoodDetailPage({ params }) {
                   Distance
                 </p>
                 <p className="text-lg font-bold text-foreground">
-                  {item.distance} km
+                  {Number.isFinite(item.distance) ? `${item.distance} km` : "N/A"}
                 </p>
               </div>
             </div>
