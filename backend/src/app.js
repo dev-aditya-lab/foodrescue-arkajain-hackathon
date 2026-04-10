@@ -63,9 +63,6 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
   res.redirect(FRONTEND_URL);
 });
-app.get('/:notFound', (req, res) => {
-  res.redirect(FRONTEND_URL);
-});
 
 
 export default app;
