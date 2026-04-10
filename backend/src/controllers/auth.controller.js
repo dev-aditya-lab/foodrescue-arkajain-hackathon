@@ -3,6 +3,14 @@ import jwt from 'jsonwebtoken';
 import userModel from '../model/user.model.js';
 import { JWT_SECRET } from '../config/env.config.js';
 
+const isProduction = process.env.NODE_ENV === 'production';
+const authCookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 
 
@@ -29,9 +37,17 @@ export async function registerUser(req, res){
 
     try {
         // Check if user already exists
-        const existingUser = await userModel.findOne({ email });
+        const existingUser = await userModel.findOne({
+            $or: [{ email }, { phone }]
+        });
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+            if (existingUser.email === email) {
+                return res.status(409).json({ message: 'Email already registered' });
+            }
+            if (existingUser.phone === phone) {
+                return res.status(409).json({ message: 'Phone already registered' });
+            }
+            return res.status(409).json({ message: 'User already exists' });
         }
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -53,7 +69,7 @@ export async function registerUser(req, res){
         // Generate JWT token
         try{
             const token = jwt.sign({ userId: newUser._id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
-            res.cookie('token', token);
+            res.cookie('token', token, authCookieOptions);
         }catch(err){
             console.error('Error generating token:', err);
         }
@@ -62,6 +78,19 @@ export async function registerUser(req, res){
         res.status(201).json({ message: 'User registered successfully', user: safeUser });
     } catch (error) {
         console.error('Error registering user:', error);
+        if (error?.code === 11000) {
+            const duplicateField = Object.keys(error.keyPattern || {})[0];
+            if (duplicateField === 'email') {
+                return res.status(409).json({ message: 'Email already registered' });
+            }
+            if (duplicateField === 'phone') {
+                return res.status(409).json({ message: 'Phone already registered' });
+            }
+            return res.status(409).json({ message: 'Duplicate value found' });
+        }
+        if (error?.name === 'ValidationError') {
+            return res.status(400).json({ message: error.message || 'Validation failed' });
+        }
         res.status(500).json({ message: 'Server error' });
     }
 }
@@ -77,6 +106,9 @@ export async function loginUser(req,res){
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+        if (!user.password) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
@@ -84,7 +116,7 @@ export async function loginUser(req,res){
         // Generate JWT token
         try{
             const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-            res.cookie('token', token);
+            res.cookie('token', token, authCookieOptions);
         }catch(err){
             console.error('Error generating token:', err);
         }
@@ -109,6 +141,6 @@ export async function getMe(req, res){
 }
 
 export async function logoutUser(req, res){
-    res.clearCookie('token');
+    res.clearCookie('token', authCookieOptions);
     res.status(200).json({ message: 'Logout successful' });
 }
