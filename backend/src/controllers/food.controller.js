@@ -1,6 +1,10 @@
 import foodModel from "../model/food.model.js";
 import cloudinary from "../config/cloudinary.js";
 import { CLOUDINARY_FOLDER } from "../config/env.config.js";
+import {
+    calculatePriorityScoreWithAI,
+    generateFoodContentWithAI,
+} from "../services/groq.service.js";
 
 function uploadFoodImage(fileBuffer) {
     return new Promise((resolve, reject) => {
@@ -102,17 +106,21 @@ export async function addFoodItem(req, res){
         if (!title || !description || !quantity || !foodType || !expiryDate) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-        // calculate priority score based on expiry date and quantity (example logic, can be improved)
-        const now = new Date();
         const expiry = new Date(expiryDate);
 
         if (Number.isNaN(expiry.getTime())) {
             return res.status(400).json({ message: 'Invalid expiryDate' });
         }
 
-        const timeToExpiry = (expiry - now) / (1000 * 60 * 60); // in hours
-        //todo: intigarte AI to calculate better priority score based on food type, local demand, etc.
-        const priorityScore = 20;
+        const priorityScore = await calculatePriorityScoreWithAI({
+            title,
+            description,
+            quantity,
+            foodType,
+            expiryDate: expiry,
+            location: ProviderLocation,
+            organizationName: req.user.organizationName || null,
+        });
 
         let imageUrl = null;
         if (req.file?.buffer) {
@@ -138,6 +146,31 @@ export async function addFoodItem(req, res){
     } catch (error) {
         console.error('Error adding food item:', error);
         res.status(500).json({ message: 'Server error' });
+    }
+}
+
+export async function suggestFoodContent(req, res) {
+    if (req.user.role !== 'provider') {
+        return res.status(403).json({ message: 'Only providers can use AI suggestion' });
+    }
+
+    try {
+        const { details = "", quantity = "", foodType = "" } = req.body;
+
+        if (!details && !quantity && !foodType) {
+            return res.status(400).json({ message: 'Please provide at least one detail for AI suggestion' });
+        }
+
+        const suggestion = await generateFoodContentWithAI({
+            details,
+            quantity,
+            foodType,
+        });
+
+        return res.status(200).json({ suggestion });
+    } catch (error) {
+        console.error('Error generating AI suggestion:', error);
+        return res.status(500).json({ message: 'Failed to generate AI suggestion' });
     }
 }
 
@@ -170,18 +203,24 @@ export async function editFoodItem(req, res) {
         if (title !== undefined) existingFood.title = title;
         if (description !== undefined) existingFood.description = description;
         if (quantity !== undefined) {
-            const parsedQuantity = Number(quantity);
-            if (Number.isNaN(parsedQuantity) || parsedQuantity <= 0) {
-                return res.status(400).json({ message: 'Quantity must be a positive number' });
+            const normalizedQuantity = String(quantity).trim();
+            if (!normalizedQuantity) {
+                return res.status(400).json({ message: 'Quantity cannot be empty' });
             }
-            existingFood.quantity = parsedQuantity;
+            existingFood.quantity = normalizedQuantity;
         }
         if (foodType !== undefined) existingFood.foodType = foodType;
         if (status !== undefined) existingFood.status = status;
 
-        const now = new Date();
-        const timeToExpiry = (new Date(existingFood.expiryDate) - now) / (1000 * 60 * 60);
-        existingFood.priorityScore = existingFood.quantity > 0 ? timeToExpiry / existingFood.quantity : 0;
+        existingFood.priorityScore = await calculatePriorityScoreWithAI({
+            title: existingFood.title,
+            description: existingFood.description,
+            quantity: existingFood.quantity,
+            foodType: existingFood.foodType,
+            expiryDate: existingFood.expiryDate,
+            location: existingFood.location,
+            organizationName: existingFood.organizationName,
+        });
 
         await existingFood.save();
 

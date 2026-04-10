@@ -10,6 +10,43 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+function uploadWithProgress(endpoint, formData, onUploadProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE_URL}${endpoint}`);
+    xhr.withCredentials = true;
+
+    if (typeof onUploadProgress === "function") {
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return;
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onUploadProgress(percent);
+      };
+    }
+
+    xhr.onerror = () => {
+      reject(new Error(`Backend unavailable at ${API_BASE_URL}. Start backend server and retry.`));
+    };
+
+    xhr.onload = () => {
+      const contentType = xhr.getResponseHeader("Content-Type") || "";
+      const isJson = contentType.includes("application/json");
+      const data = isJson ? JSON.parse(xhr.responseText || "{}") : {};
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+        return;
+      }
+
+      reject(
+        new Error(data.message || `API error: ${xhr.status} ${xhr.statusText}`)
+      );
+    };
+
+    xhr.send(formData);
+  });
+}
+
 /**
  * Generic fetch wrapper with error handling
  */
@@ -69,8 +106,12 @@ export async function getFoodItemById(id) {
  * Create a new food item listing
  * @param {Object} data - { name, quantity, expiryTime, location, foodType, description, ... }
  */
-export async function createFoodItem(data) {
+export async function createFoodItem(data, options = {}) {
   if (data instanceof FormData) {
+    if (typeof options.onUploadProgress === "function") {
+      return uploadWithProgress("/food/add-food", data, options.onUploadProgress);
+    }
+
     return apiFetch("/food/add-food", {
       method: "POST",
       body: data,
@@ -190,5 +231,15 @@ export async function updateClaimStatus(claimId, status) {
 export async function fetchMyFoodItems() {
   return apiFetch("/food/my-food", {
     method: "GET",
+  });
+}
+
+/**
+ * Provider: AI suggestion for title/description from minimal details
+ */
+export async function suggestFoodContent(payload) {
+  return apiFetch("/food/ai-suggest", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

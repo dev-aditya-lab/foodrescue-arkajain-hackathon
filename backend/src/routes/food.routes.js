@@ -6,6 +6,7 @@ import {
 	getAvailableFoodItems,
 	getFoodItemById,
 	getMyFoodItems,
+	suggestFoodContent,
 	editFoodItem,
 	removeFoodItem,
 	deleteFoodItem
@@ -19,6 +20,13 @@ const foodRouter = express.Router();
  * @body { title, description, quantity, foodType, expiryDate }
  */
 foodRouter.post('/add-food', identifyUser, upload.single('image'), addFoodItem)
+
+/**
+ * @route POST /api/food/ai-suggest
+ * @desc Generate AI title/description from minimal provider input.
+ * @access Private (provider only)
+ */
+foodRouter.post('/ai-suggest', identifyUser, suggestFoodContent);
 
 /**
  * @route GET /api/food/list

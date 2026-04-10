@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Clock, MapPin, Tag, FileText, Package, Loader2, CheckCircle } from "lucide-react";
-import { createFoodItem } from "@/lib/api";
+import { ArrowLeft, Plus, Clock, MapPin, Tag, FileText, Package, Loader2, CheckCircle, Sparkles } from "lucide-react";
+import { createFoodItem, suggestFoodContent } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 const FOOD_TYPES = [
@@ -17,8 +17,11 @@ export default function AddFoodPage() {
   const router = useRouter();
   const { role, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [aiError, setAiError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -26,6 +29,8 @@ export default function AddFoodPage() {
     foodType: "",
     expiryDate: "",
   });
+  const [aiDetails, setAiDetails] = useState("");
+  const [suggestion, setSuggestion] = useState(null);
   const [imageFile, setImageFile] = useState(null);
 
   const handleChange = (e) => {
@@ -36,19 +41,24 @@ export default function AddFoodPage() {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
+    setUploadProgress(0);
 
     try {
       const payload = new FormData();
       payload.append("title", form.title);
       payload.append("description", form.description);
-      payload.append("quantity", String(Number(form.quantity)));
+      payload.append("quantity", form.quantity);
       payload.append("foodType", form.foodType);
       payload.append("expiryDate", form.expiryDate);
       if (imageFile) {
         payload.append("image", imageFile);
       }
 
-      await createFoodItem(payload);
+      await createFoodItem(payload, {
+        onUploadProgress: (percent) => setUploadProgress(percent),
+      });
+
+      setUploadProgress(100);
 
       setIsSuccess(true);
 
@@ -57,9 +67,38 @@ export default function AddFoodPage() {
       }, 2000);
     } catch (error) {
       setError(error.message || "Failed to add food item.");
+      setUploadProgress(null);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGenerateSuggestion = async () => {
+    setAiError("");
+    setIsGenerating(true);
+
+    try {
+      const result = await suggestFoodContent({
+        details: aiDetails,
+        quantity: form.quantity,
+        foodType: form.foodType,
+      });
+
+      setSuggestion(result?.suggestion || null);
+    } catch (err) {
+      setAiError(err.message || "Failed to generate AI suggestion.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleUseSuggestion = () => {
+    if (!suggestion) return;
+    setForm((prev) => ({
+      ...prev,
+      title: suggestion.title || prev.title,
+      description: suggestion.description || prev.description,
+    }));
   };
 
   if (isLoading) {
@@ -117,6 +156,85 @@ export default function AddFoodPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="glass-card p-6 space-y-5 border border-primary/20">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              AI Assist
+            </h2>
+            <span className="text-xs text-muted-foreground">Optional</span>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            Add a few details and AI will suggest a better title and description.
+            You can accept or reject it.
+          </p>
+
+          <div>
+            <label htmlFor="aiDetails" className="form-label">Quick Details for AI</label>
+            <textarea
+              id="aiDetails"
+              name="aiDetails"
+              rows={3}
+              value={aiDetails}
+              onChange={(e) => setAiDetails(e.target.value)}
+              placeholder="Example: 1 packet approx 100-120 grams, fresh, packed today, suitable for 2 people"
+              className="form-input resize-none"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleGenerateSuggestion}
+              disabled={isGenerating || (!aiDetails && !form.quantity && !form.foodType)}
+              className="btn-outline disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? "Generating..." : "Generate Title + Description"}
+            </button>
+
+            {suggestion ? (
+              <button
+                type="button"
+                onClick={handleUseSuggestion}
+                className="btn-primary"
+              >
+                Use Suggestion
+              </button>
+            ) : null}
+
+            {suggestion ? (
+              <button
+                type="button"
+                onClick={() => setSuggestion(null)}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground/75 hover:text-foreground hover:bg-muted"
+              >
+                Deny Suggestion
+              </button>
+            ) : null}
+          </div>
+
+          {aiError ? (
+            <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
+              {aiError}
+            </p>
+          ) : null}
+
+          {suggestion ? (
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">AI Suggestion</p>
+              <div>
+                <p className="text-xs text-muted-foreground">Title</p>
+                <p className="font-semibold text-foreground">{suggestion.title}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Description</p>
+                <p className="text-sm text-foreground/90">{suggestion.description}</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         {/* Food Details */}
         <div className="glass-card p-6 space-y-5">
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -177,7 +295,7 @@ export default function AddFoodPage() {
                 name="quantity"
                 type="text"
                 required
-                placeholder="e.g., 5 kg, 10 servings"
+                placeholder="e.g., 1 packet (approx. 100-120 grams)"
                 value={form.quantity}
                 onChange={handleChange}
                 className="form-input"
@@ -236,6 +354,23 @@ export default function AddFoodPage() {
           <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
             {error}
           </p>
+        ) : null}
+
+        {isSubmitting && uploadProgress !== null ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {uploadProgress < 100 ? "Uploading image and details..." : "Upload complete, finalizing..."}
+              </span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-linear-to-r from-primary to-orange-500 transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
         ) : null}
 
         {/* Submit */}
