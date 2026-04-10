@@ -4,9 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import {
+  deleteFoodItem,
+  editFoodItem,
   fetchIncomingClaims,
   fetchMyClaims,
   fetchMyFoodItems,
+  removeFoodItem,
   updateClaimStatus,
 } from "@/lib/api";
 
@@ -17,6 +20,14 @@ export default function DashboardPage() {
   const [incomingClaims, setIncomingClaims] = useState([]);
   const [myClaims, setMyClaims] = useState([]);
   const [myFoodItems, setMyFoodItems] = useState([]);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    quantity: "",
+    foodType: "",
+    expiryDate: "",
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -83,6 +94,67 @@ export default function DashboardPage() {
     }
   };
 
+  const startEdit = (item) => {
+    setEditingItemId(item._id);
+    setEditForm({
+      title: item.title || "",
+      description: item.description || "",
+      quantity: item.quantity || "",
+      foodType: item.foodType || "",
+      expiryDate: item.expiryDate
+        ? new Date(item.expiryDate).toISOString().slice(0, 16)
+        : "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingItemId(null);
+    setEditForm({ title: "", description: "", quantity: "", foodType: "", expiryDate: "" });
+  };
+
+  const handleSaveEdit = async (itemId) => {
+    try {
+      const payload = {
+        title: editForm.title,
+        description: editForm.description,
+        quantity: editForm.quantity,
+        foodType: editForm.foodType,
+        expiryDate: editForm.expiryDate || undefined,
+      };
+
+      const result = await editFoodItem(itemId, payload);
+      const updated = result?.foodItem;
+
+      setMyFoodItems((prev) =>
+        prev.map((item) => (item._id === itemId ? { ...item, ...updated } : item))
+      );
+      cancelEdit();
+    } catch (err) {
+      setError(err.message || "Unable to update food item.");
+    }
+  };
+
+  const handleRemoveFood = async (itemId) => {
+    try {
+      const result = await removeFoodItem(itemId);
+      const updated = result?.foodItem;
+      setMyFoodItems((prev) =>
+        prev.map((item) => (item._id === itemId ? { ...item, ...updated } : item))
+      );
+    } catch (err) {
+      setError(err.message || "Unable to remove food item.");
+    }
+  };
+
+  const handleDeleteFood = async (itemId) => {
+    try {
+      await deleteFoodItem(itemId);
+      setMyFoodItems((prev) => prev.filter((item) => item._id !== itemId));
+    } catch (err) {
+      setError(err.message || "Unable to delete food item.");
+    }
+  };
+
   if (authLoading || loading) {
     return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">Loading dashboard...</div>;
   }
@@ -144,12 +216,77 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {myFoodItems.slice(0, 8).map((item) => (
-                  <div key={item._id} className="border border-border rounded-lg p-4 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-foreground">{item.title}</p>
-                      <p className="text-sm text-muted-foreground">Qty: {item.quantity} • Type: {item.foodType}</p>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-1 rounded-md bg-muted text-foreground capitalize">{item.status}</span>
+                  <div key={item._id} className="border border-border rounded-lg p-4 space-y-3">
+                    {editingItemId === item._id ? (
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={editForm.title}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                          className="form-input"
+                          placeholder="Title"
+                        />
+                        <textarea
+                          value={editForm.description}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                          className="form-input resize-none"
+                          rows={2}
+                          placeholder="Description"
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            value={editForm.quantity}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, quantity: e.target.value }))}
+                            className="form-input"
+                            placeholder="Quantity"
+                          />
+                          <select
+                            value={editForm.foodType}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, foodType: e.target.value }))}
+                            className="form-select"
+                          >
+                            <option value="veg">veg</option>
+                            <option value="non-veg">non-veg</option>
+                            <option value="mixed">mixed</option>
+                          </select>
+                          <input
+                            type="datetime-local"
+                            value={editForm.expiryDate}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, expiryDate: e.target.value }))}
+                            className="form-input"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button onClick={() => handleSaveEdit(item._id)} className="btn-primary" type="button">Save</button>
+                          <button onClick={cancelEdit} className="btn-outline" type="button">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-foreground">{item.title}</p>
+                          <p className="text-sm text-muted-foreground">Qty: {item.quantity} • Type: {item.foodType}</p>
+                        </div>
+                        <span className="text-xs font-semibold px-2 py-1 rounded-md bg-muted text-foreground capitalize">{item.status}</span>
+                      </div>
+                    )}
+
+                    {editingItemId !== item._id ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => startEdit(item)} className="btn-outline" type="button">Edit</button>
+                        {item.status === "available" ? (
+                          <button onClick={() => handleRemoveFood(item._id)} className="btn-outline" type="button">Mark Expired</button>
+                        ) : null}
+                        <button
+                          onClick={() => handleDeleteFood(item._id)}
+                          className="px-4 py-2 rounded-lg border border-red-200 text-sm font-medium text-destructive hover:bg-red-50"
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>

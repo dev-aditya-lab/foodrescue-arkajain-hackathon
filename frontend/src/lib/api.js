@@ -146,6 +146,25 @@ export async function deleteFoodItem(id) {
   });
 }
 
+/**
+ * Provider: edit a food item
+ */
+export async function editFoodItem(id, data) {
+  return apiFetch(`/food/edit-food/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Provider: soft remove (expire) a food item
+ */
+export async function removeFoodItem(id) {
+  return apiFetch(`/food/remove-food/${id}`, {
+    method: "PATCH",
+  });
+}
+
 // ─── Stats ───
 
 /**
