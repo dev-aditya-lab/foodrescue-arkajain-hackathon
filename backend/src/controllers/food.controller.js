@@ -36,6 +36,57 @@ export async function getMyFoodItems(req, res) {
     }
 }
 
+export async function getAvailableFoodItems(req, res) {
+    try {
+        const { search = "", foodType = "" } = req.query;
+
+        const query = {
+            status: "available"
+        };
+
+        if (foodType) {
+            query.foodType = foodType;
+        }
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+                { location: { $regex: search, $options: "i" } },
+                { organizationName: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        const foodItems = await foodModel
+            .find(query)
+            .populate("provider", "name email phone organizationName")
+            .sort({ priorityScore: -1, createdAt: -1 });
+
+        return res.status(200).json({ foodItems });
+    } catch (error) {
+        console.error("Error fetching food items:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+}
+
+export async function getFoodItemById(req, res) {
+    try {
+        const { foodId } = req.params;
+        const foodItem = await foodModel
+            .findById(foodId)
+            .populate("provider", "name email phone organizationName");
+
+        if (!foodItem) {
+            return res.status(404).json({ message: "Food item not found" });
+        }
+
+        return res.status(200).json({ foodItem });
+    } catch (error) {
+        console.error("Error fetching food item:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+}
+
 export async function addFoodItem(req, res){
     //  * @data { title, description, quantity,foodType (["veg", "non-veg", "mixed"]),provider (ref:user),location(ref: user's saved loacation), expiryDate,status (["available", "reserved", "collected", "expired"]), priorityScore (calculated based on expiryDate and quantity),orgnizationName (ref: user's organizationName }
 
@@ -77,7 +128,7 @@ export async function addFoodItem(req, res){
             provider: providerID,
             location: ProviderLocation,
             imageUrl,
-            expiryDate : timeToExpiry,
+            expiryDate: expiry,
             status: 'available',
             priorityScore,
             organizationName: req.user.organizationName || null

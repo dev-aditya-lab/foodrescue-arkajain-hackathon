@@ -5,7 +5,6 @@
  * Example: NEXT_PUBLIC_API_URL=http://localhost:5000/api
  *
  * All functions return JSON data from the backend.
- * They fall back to mock data when the API is unavailable.
  */
 
 const API_BASE_URL =
@@ -37,8 +36,7 @@ async function apiFetch(endpoint, options = {}) {
     return await response.json();
   } catch (error) {
     if (error.name === "TypeError" && error.message.includes("fetch")) {
-      console.warn(`[API] Backend unavailable at ${url}. Using mock data.`);
-      return null;
+      throw new Error(`Backend unavailable at ${API_BASE_URL}. Start backend server and retry.`);
     }
     throw error;
   }
@@ -53,13 +51,10 @@ async function apiFetch(endpoint, options = {}) {
 export async function fetchFoodItems(filters = {}) {
   const params = new URLSearchParams();
   if (filters.search) params.set("search", filters.search);
-  if (filters.distance) params.set("distance", filters.distance);
-  if (filters.expiry && filters.expiry !== "all")
-    params.set("expiry", filters.expiry);
   if (filters.foodType) params.set("foodType", filters.foodType);
 
   const query = params.toString() ? `?${params.toString()}` : "";
-  return apiFetch(`/food-items${query}`);
+  return apiFetch(`/food/list${query}`);
 }
 
 /**
@@ -67,7 +62,7 @@ export async function fetchFoodItems(filters = {}) {
  * @param {string} id
  */
 export async function getFoodItemById(id) {
-  return apiFetch(`/food-items/${id}`);
+  return apiFetch(`/food/${id}`);
 }
 
 /**

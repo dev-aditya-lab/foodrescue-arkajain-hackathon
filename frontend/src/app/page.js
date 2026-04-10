@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { ArrowRight, Leaf, Users, Zap, TrendingUp, Heart, Utensils } from "lucide-react";
 import FoodCard from "@/components/FoodCard";
-import { mockFoodItems } from "@/lib/mockData";
 import { useEffect, useRef, useState } from "react";
+import { fetchFoodItems } from "@/lib/api";
+import { mapFoodFromApi } from "@/lib/foodAdapter";
 
 function AnimatedCounter({ target, suffix = "" }) {
   const [count, setCount] = useState(0);
@@ -48,7 +49,33 @@ function AnimatedCounter({ target, suffix = "" }) {
 }
 
 export default function HomePage() {
-  const featuredItems = mockFoodItems.slice(0, 4);
+  const [featuredItems, setFeaturedItems] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadFeaturedItems() {
+      try {
+        const response = await fetchFoodItems();
+        const items = (response?.foodItems || [])
+          .map(mapFoodFromApi)
+          .filter(Boolean)
+          .slice(0, 4);
+        if (!ignore) {
+          setFeaturedItems(items);
+        }
+      } catch {
+        if (!ignore) {
+          setFeaturedItems([]);
+        }
+      }
+    }
+
+    loadFeaturedItems();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <div className="space-y-0 pb-20">
@@ -72,7 +99,7 @@ export default function HomePage() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight tracking-tight">
                 Save Food.
                 <br />
-                <span className="bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-primary to-orange-500 bg-clip-text text-transparent">
                   Share Care.
                 </span>
               </h1>
@@ -95,13 +122,13 @@ export default function HomePage() {
 
             {/* Right Illustration */}
             <div className="relative animate-slide-up hidden lg:block">
-              <div className="relative h-[420px] rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 flex items-center justify-center overflow-hidden border border-border/50">
+              <div className="relative h-105 rounded-3xl bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 flex items-center justify-center overflow-hidden border border-border/50">
                 {/* Floating elements */}
                 <div className="absolute w-48 h-48 bg-primary/8 rounded-full -top-10 -right-10 blur-2xl animate-float" />
                 <div className="absolute w-36 h-36 bg-secondary/8 rounded-full -bottom-6 -left-6 blur-2xl animate-float" style={{ animationDelay: "2s" }} />
 
                 <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-xl">
+                  <div className="w-28 h-28 rounded-3xl bg-linear-to-br from-primary to-orange-500 flex items-center justify-center shadow-xl">
                     <Leaf className="w-14 h-14 text-white animate-pulse-slow" />
                   </div>
                   <div className="text-center space-y-2">
@@ -206,7 +233,7 @@ export default function HomePage() {
             ].map((feature) => (
               <div
                 key={feature.title}
-                className={`relative p-8 rounded-2xl bg-gradient-to-br ${feature.gradient} border border-border ${feature.borderHover} transition-all duration-300 group`}
+                className={`relative p-8 rounded-2xl bg-linear-to-br ${feature.gradient} border border-border ${feature.borderHover} transition-all duration-300 group`}
               >
                 <div className="absolute top-6 right-6 text-5xl font-black text-foreground/5 group-hover:text-foreground/10 transition-colors">
                   {feature.step}
@@ -252,7 +279,7 @@ export default function HomePage() {
       {/* ─── CTA ─── */}
       <section className="py-16 sm:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-3xl border border-primary/20 p-10 sm:p-16 text-center space-y-6 overflow-hidden">
+          <div className="relative bg-linear-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-3xl border border-primary/20 p-10 sm:p-16 text-center space-y-6 overflow-hidden">
             {/* Background glow */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />

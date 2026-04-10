@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FoodCard from "@/components/FoodCard";
 import FilterBar from "@/components/FilterBar";
-import { mockFoodItems } from "@/lib/mockData";
+import { fetchFoodItems } from "@/lib/api";
+import { mapFoodFromApi } from "@/lib/foodAdapter";
 
 export default function AllFoodsPage() {
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filters, setFilters] = useState({
     distance: null,
     expiry: "all",
@@ -13,19 +17,40 @@ export default function AllFoodsPage() {
     search: "",
   });
 
-  const filteredItems = useMemo(() => {
-    return mockFoodItems.filter((item) => {
-      // Search filter
-      if (
-        filters.search &&
-        !item.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !item.foodType.toLowerCase().includes(filters.search.toLowerCase())
-      ) {
-        return false;
-      }
+  useEffect(() => {
+    let ignore = false;
 
-      // Distance filter
-      if (filters.distance !== null && item.distance > filters.distance) {
+    async function loadFoods() {
+      setIsLoading(true);
+      setError("");
+      try {
+        const response = await fetchFoodItems({ search: filters.search });
+        const apiItems = (response?.foodItems || [])
+          .map(mapFoodFromApi)
+          .filter(Boolean);
+        if (!ignore) {
+          setItems(apiItems);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message || "Failed to load food items");
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadFoods();
+    return () => {
+      ignore = true;
+    };
+  }, [filters.search]);
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (filters.distance !== null && typeof item.distance === "number" && item.distance > filters.distance) {
         return false;
       }
 
@@ -39,14 +64,14 @@ export default function AllFoodsPage() {
       // Food type filter
       if (
         filters.foodType &&
-        !item.foodType.toLowerCase().includes(filters.foodType.toLowerCase())
+        !(item.foodType || "").toLowerCase().includes(filters.foodType.toLowerCase())
       ) {
         return false;
       }
 
       return true;
     });
-  }, [filters]);
+  }, [filters, items]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
@@ -72,10 +97,18 @@ export default function AllFoodsPage() {
       {/* Results Count */}
       <div className="mb-6">
         <p className="text-muted-foreground font-medium text-sm">
+          {isLoading ? "Loading food items..." : ""}
+          {!isLoading ? (
+            <>
           {filteredItems.length}{" "}
           {filteredItems.length === 1 ? "item" : "items"} available
           {filters.search && ` matching "${filters.search}"`}
+            </>
+          ) : null}
         </p>
+        {error ? (
+          <p className="text-sm text-destructive mt-2">{error}</p>
+        ) : null}
       </div>
 
       {/* Food Grid */}

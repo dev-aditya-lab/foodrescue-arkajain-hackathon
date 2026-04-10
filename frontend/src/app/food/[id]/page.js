@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,19 +12,53 @@ import {
   Check,
   User,
 } from "lucide-react";
-import { mockFoodItems } from "@/lib/mockData";
 import CountdownTimer from "@/components/CountdownTimer";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { getFoodItemById } from "@/lib/api";
+import { mapFoodFromApi } from "@/lib/foodAdapter";
 
 export default function FoodDetailPage({ params }) {
   const resolvedParams = use(params);
   const { id } = resolvedParams;
-  const item = mockFoodItems.find((f) => f.id === id);
+  const [item, setItem] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
   const { role } = useAuth();
   const [isAdded, setIsAdded] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadFood() {
+      setIsLoading(true);
+      try {
+        const response = await getFoodItemById(id);
+        const mapped = mapFoodFromApi(response?.foodItem);
+        if (!ignore) {
+          setItem(mapped);
+        }
+      } catch {
+        if (!ignore) {
+          setItem(null);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadFood();
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto px-4 py-20 text-center">Loading food item...</div>;
+  }
 
   if (!item) {
     return (
@@ -64,7 +98,7 @@ export default function FoodDetailPage({ params }) {
         <div className="lg:col-span-2 space-y-6">
           {/* Image */}
           <div className="glass-card overflow-hidden">
-            <div className="w-full h-64 sm:h-80 bg-gradient-to-br from-primary/8 to-secondary/8 flex items-center justify-center relative">
+            <div className="w-full h-64 sm:h-80 bg-linear-to-br from-primary/8 to-secondary/8 flex items-center justify-center relative">
               {item.image ? (
                 <img
                   src={item.image}
@@ -124,7 +158,7 @@ export default function FoodDetailPage({ params }) {
             {/* Location & Time */}
             <div className="space-y-3 pt-2">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-secondary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-lg bg-secondary/15 flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin className="w-4 h-4 text-secondary" />
                 </div>
                 <div>
@@ -138,7 +172,7 @@ export default function FoodDetailPage({ params }) {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
                   <Clock className="w-4 h-4 text-primary" />
                 </div>
                 <div>
