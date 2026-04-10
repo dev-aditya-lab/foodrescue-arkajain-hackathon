@@ -46,7 +46,9 @@ export async function registerUser(req, res){
         }catch(err){
             console.error('Error generating token:', err);
         }
-        res.status(201).json({ message: 'User registered successfully', user });
+        const safeUser = newUser.toObject();
+        delete safeUser.password;
+        res.status(201).json({ message: 'User registered successfully', user: safeUser });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ message: 'Server error' });
@@ -84,7 +86,7 @@ export async function loginUser(req,res){
 
 export async function getMe(req, res){
     try {
-        const user = await userModel.findById(req.user);
+        const user = await userModel.findById(req.user._id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -96,6 +98,6 @@ export async function getMe(req, res){
 }
 
 export async function logoutUser(req, res){
-    res.clearCookie('token', cookieOptions);
+    res.clearCookie('token');
     res.status(200).json({ message: 'Logout successful' });
 }

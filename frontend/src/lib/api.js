@@ -17,6 +17,7 @@ const API_BASE_URL =
 async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const config = {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
@@ -131,5 +132,23 @@ export async function register(userData) {
   return apiFetch("/auth/register", {
     method: "POST",
     body: JSON.stringify(userData),
+  });
+}
+
+/**
+ * Get current logged-in user from cookie session
+ */
+export async function getMe() {
+  return apiFetch("/auth/get-me", {
+    method: "GET",
+  });
+}
+
+/**
+ * Logout current user and clear cookie session
+ */
+export async function logout() {
+  return apiFetch("/auth/logout", {
+    method: "POST",
   });
 }

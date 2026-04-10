@@ -11,6 +11,8 @@ const navItems = [
   { label: "Foods", path: "/all-foods" },
   { label: "Add Food", path: "/add-food" },
   { label: "Map", path: "/map" },
+  { label: "Login", path: "/login" },
+  { label: "Register", path: "/register" },
 ];
 
 export default function Navbar() {
