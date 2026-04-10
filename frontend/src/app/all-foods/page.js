@@ -33,14 +33,22 @@ export default function AllFoodsPage() {
         let apiItems = (response?.foodItems || [])
           .map(mapFoodFromApi)
           .filter(Boolean);
-
-        apiItems = await attachRoadDistances(apiItems, {
-          latitude: userLatitude,
-          longitude: userLongitude,
-        });
-
         if (!ignore) {
           setItems(apiItems);
+          setIsLoading(false);
+
+          attachRoadDistances(apiItems, {
+            latitude: userLatitude,
+            longitude: userLongitude,
+          })
+            .then((itemsWithDistance) => {
+              if (!ignore) {
+                setItems(itemsWithDistance);
+              }
+            })
+            .catch(() => {
+              // Keep the quick initial list if distance lookup fails.
+            });
         }
       } catch (err) {
         if (!ignore) {

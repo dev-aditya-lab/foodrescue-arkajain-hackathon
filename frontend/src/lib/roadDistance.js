@@ -6,6 +6,32 @@ function toCoord(value) {
   return Number(value);
 }
 
+const DISTANCE_CACHE_TTL_MS = 5 * 60 * 1000;
+const OSRM_TIMEOUT_MS = 1500;
+const distanceCache = new Map();
+
+function coordKey(lat, lng) {
+  return `${Number(lat).toFixed(5)},${Number(lng).toFixed(5)}`;
+}
+
+function cacheKey(userLat, userLng, providerLat, providerLng) {
+  return `${coordKey(userLat, userLng)}->${coordKey(providerLat, providerLng)}`;
+}
+
+function getCachedDistance(key) {
+  const hit = distanceCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.timestamp > DISTANCE_CACHE_TTL_MS) {
+    distanceCache.delete(key);
+    return null;
+  }
+  return hit.distance;
+}
+
+function setCachedDistance(key, distance) {
+  distanceCache.set(key, { distance, timestamp: Date.now() });
+}
+
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const toRad = (d) => (d * Math.PI) / 180;
@@ -30,17 +56,44 @@ export async function attachRoadDistances(items, user) {
     (item) => isFiniteNumber(item.providerLatitude) && isFiniteNumber(item.providerLongitude)
   );
 
+  const cachedDistances = new Map();
+  const missingItems = [];
+
+  validItems.forEach((item) => {
+    const key = cacheKey(userLat, userLng, item.providerLatitude, item.providerLongitude);
+    const cached = getCachedDistance(key);
+    if (cached !== null) {
+      cachedDistances.set(item.id, cached);
+    } else {
+      missingItems.push(item);
+    }
+  });
+
   if (validItems.length === 0) {
     return items;
   }
 
+  if (missingItems.length === 0) {
+    return items.map((item) => ({
+      ...item,
+      distance: cachedDistances.has(item.id) ? cachedDistances.get(item.id) : item.distance,
+    }));
+  }
+
   try {
-    const destinations = validItems
+    const destinations = missingItems
       .map((item) => `${toCoord(item.providerLongitude)},${toCoord(item.providerLatitude)}`)
       .join(";");
 
     const url = `https://router.project-osrm.org/table/v1/driving/${source};${destinations}?sources=0&annotations=distance`;
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
+    let response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!response.ok) {
       throw new Error("Road distance API failed");
     }
@@ -49,11 +102,18 @@ export async function attachRoadDistances(items, user) {
     const distances = data?.distances?.[0] || [];
 
     const distanceById = new Map();
-    validItems.forEach((item, idx) => {
+    missingItems.forEach((item, idx) => {
       const meters = distances[idx + 1];
       if (Number.isFinite(meters)) {
-        distanceById.set(item.id, Number((meters / 1000).toFixed(1)));
+        const km = Number((meters / 1000).toFixed(1));
+        const key = cacheKey(userLat, userLng, item.providerLatitude, item.providerLongitude);
+        setCachedDistance(key, km);
+        distanceById.set(item.id, km);
       }
+    });
+
+    cachedDistances.forEach((km, itemId) => {
+      distanceById.set(itemId, km);
     });
 
     return items.map((item) => ({
@@ -61,9 +121,11 @@ export async function attachRoadDistances(items, user) {
       distance: distanceById.has(item.id) ? distanceById.get(item.id) : item.distance,
     }));
   } catch {
-    return items.map((item) => {
+    const fallbackById = new Map();
+
+    missingItems.forEach((item) => {
       if (!isFiniteNumber(item.providerLatitude) || !isFiniteNumber(item.providerLongitude)) {
-        return item;
+        return;
       }
 
       const km = haversineKm(
@@ -73,10 +135,19 @@ export async function attachRoadDistances(items, user) {
         toCoord(item.providerLongitude)
       );
 
-      return {
-        ...item,
-        distance: Number(km.toFixed(1)),
-      };
+      const roundedKm = Number(km.toFixed(1));
+      const key = cacheKey(userLat, userLng, item.providerLatitude, item.providerLongitude);
+      setCachedDistance(key, roundedKm);
+      fallbackById.set(item.id, roundedKm);
     });
+
+    cachedDistances.forEach((km, itemId) => {
+      fallbackById.set(itemId, km);
+    });
+
+    return items.map((item) => ({
+      ...item,
+      distance: fallbackById.has(item.id) ? fallbackById.get(item.id) : item.distance,
+    }));
   }
 }
