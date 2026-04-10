@@ -11,7 +11,7 @@ export async function identifyUser(req, res, next) {
         const decoded = jwt.verify(token, JWT_SECRET);
         const user = await userModel
             .findById(decoded.userId)
-            .select('_id role location organizationName');
+            .select('_id role latitude longitude location organizationName');
 
         if (!user) {
             return res.status(401).json({ message: 'Unauthorized' });
@@ -20,6 +20,8 @@ export async function identifyUser(req, res, next) {
         req.user = {
             _id: user._id,
             role: user.role,
+            latitude: user.latitude,
+            longitude: user.longitude,
             location: user.location,
             organizationName: user.organizationName
         };

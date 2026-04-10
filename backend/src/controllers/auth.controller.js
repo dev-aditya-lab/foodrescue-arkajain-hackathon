@@ -7,15 +7,24 @@ import { JWT_SECRET } from '../config/env.config.js';
 
 
 export async function registerUser(req, res){
-    //  * @data : { name, phone, email, password, role, providerType (if provider), location, organizationName (if NGO) }
-    const { name, phone, email, password, role, providerType, location, organizationName } = req.body;
+    //  * @data : { name, phone, email, password, role, providerType (if provider), latitude, longitude, location(optional), organizationName }
+    const { name, phone, email, password, role, providerType, latitude, longitude, location, organizationName } = req.body;
     // Validate required fields
-    if (!name || !phone || !email || !password || !role) {
+    if (!name || !phone || !email || !password || !role || latitude === undefined || longitude === undefined) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
     // Validate role    
     if (!['provider', 'receiver'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    const parsedLatitude = Number(latitude);
+    const parsedLongitude = Number(longitude);
+    if (!Number.isFinite(parsedLatitude) || !Number.isFinite(parsedLongitude)) {
+        return res.status(400).json({ message: 'Latitude and longitude must be valid numbers' });
+    }
+    if (parsedLatitude < -90 || parsedLatitude > 90 || parsedLongitude < -180 || parsedLongitude > 180) {
+        return res.status(400).json({ message: 'Latitude/longitude out of valid range' });
     }
 
     try {
@@ -34,7 +43,9 @@ export async function registerUser(req, res){
             password: hashedPassword,
             role,
             providerType,
-            location,
+            latitude: parsedLatitude,
+            longitude: parsedLongitude,
+            location: location || null,
             organizationName
         });
         await newUser.save();

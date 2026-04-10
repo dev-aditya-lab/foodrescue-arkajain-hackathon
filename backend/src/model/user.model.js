@@ -29,9 +29,21 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["restaurant", "individual", "grocery_store", "ngo", "other"],
   },
+  latitude: {
+    type: Number,
+    required: [true, "Latitude is required"],
+    min: [-90, "Latitude must be >= -90"],
+    max: [90, "Latitude must be <= 90"],
+  },
+  longitude: {
+    type: Number,
+    required: [true, "Longitude is required"],
+    min: [-180, "Longitude must be >= -180"],
+    max: [180, "Longitude must be <= 180"],
+  },
   location: {
     type: String,
-    required: [true, "Location is required"],
+    default: null,
 
   },
 

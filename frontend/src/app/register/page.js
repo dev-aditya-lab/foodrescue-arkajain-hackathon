@@ -24,11 +24,14 @@ export default function RegisterPage() {
     password: "",
     role: "provider",
     providerType: "restaurant",
+    latitude: "",
+    longitude: "",
     location: "",
     organizationName: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const isProvider = useMemo(() => formData.role === "provider", [formData.role]);
 
@@ -46,6 +49,9 @@ export default function RegisterPage() {
       ...formData,
       providerType: isProvider ? formData.providerType : undefined,
       organizationName: formData.organizationName || undefined,
+      latitude: Number(formData.latitude),
+      longitude: Number(formData.longitude),
+      location: formData.location || undefined,
     };
 
     try {
@@ -64,6 +70,32 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    setError("");
+    setGettingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: String(position.coords.latitude),
+          longitude: String(position.coords.longitude),
+        }));
+        setGettingLocation(false);
+      },
+      () => {
+        setError("Unable to fetch your current location. Please allow location access.");
+        setGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
   };
 
   return (
@@ -125,9 +157,40 @@ export default function RegisterPage() {
               <input id="organizationName" name="organizationName" value={formData.organizationName} onChange={handleChange} className="form-input" placeholder="Optional organization" />
             </div>
 
-            <div className="sm:col-span-2">
-              <label htmlFor="location" className="form-label">Location (required by backend)</label>
-              <input id="location" name="location" required value={formData.location} onChange={handleChange} className="form-input" placeholder="Address or map link" />
+            <div className="sm:col-span-2 space-y-3">
+              <label className="form-label">Geolocation (required)</label>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={gettingLocation}
+                className="btn-outline w-full disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {gettingLocation ? "Fetching current location..." : "Use Current Location"}
+              </button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  name="latitude"
+                  required
+                  readOnly
+                  value={formData.latitude}
+                  className="form-input"
+                  placeholder="Latitude"
+                />
+                <input
+                  name="longitude"
+                  required
+                  readOnly
+                  value={formData.longitude}
+                  className="form-input"
+                  placeholder="Longitude"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="location" className="form-label">Optional Address / Map URL</label>
+                <input id="location" name="location" value={formData.location} onChange={handleChange} className="form-input" placeholder="Optional human-readable location" />
+              </div>
             </div>
 
             {error ? (

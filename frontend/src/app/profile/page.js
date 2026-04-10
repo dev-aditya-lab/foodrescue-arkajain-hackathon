@@ -57,6 +57,14 @@ export default function ProfilePage() {
             <p className="text-muted-foreground">Location</p>
             <p className="font-semibold text-foreground">{user.location || "-"}</p>
           </div>
+          <div className="bg-muted/50 rounded-lg p-4">
+            <p className="text-muted-foreground">Latitude</p>
+            <p className="font-semibold text-foreground">{user.latitude ?? "-"}</p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4">
+            <p className="text-muted-foreground">Longitude</p>
+            <p className="font-semibold text-foreground">{user.longitude ?? "-"}</p>
+          </div>
           {user.organizationName ? (
             <div className="bg-muted/50 rounded-lg p-4 sm:col-span-2">
               <p className="text-muted-foreground">Organization</p>

@@ -100,7 +100,7 @@ export async function addFoodItem(req, res){
     }
     // get provider and location from user details (to avoid tampering)
     const providerID = req.user._id;
-    const ProviderLocation = req.user.location;
+    const ProviderLocation = req.user.location || `${req.user.latitude},${req.user.longitude}`;
     try {
         const { title, description, quantity, foodType, expiryDate } = req.body;
         if (!title || !description || !quantity || !foodType || !expiryDate) {
