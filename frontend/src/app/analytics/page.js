@@ -47,6 +47,20 @@ export default function AnalyticsPage() {
 
   const platform = stats?.platform || {};
   const user = stats?.user || {};
+  const userImpactItems =
+    user?.role === "provider"
+      ? [
+          { label: "My Listings", value: user.totalListed ?? 0 },
+          { label: "My Collected", value: user.totalCollected ?? 0 },
+          { label: "Meals Saved", value: user.mealsSaved ?? 0 },
+          { label: "Weight Saved (kg)", value: user.weightSavedKg ?? 0 },
+        ]
+      : [
+          { label: "My Claims", value: user.totalClaims ?? 0 },
+          { label: "Completed Claims", value: user.completedClaims ?? 0 },
+          { label: "Active Food", value: platform.availableFood ?? 0 },
+          { label: "Providers", value: platform.providers ?? 0 },
+        ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in space-y-8">
@@ -77,20 +91,7 @@ export default function AnalyticsPage() {
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground">My Impact</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {user?.role === "provider"
-            ? [
-                { label: "My Listings", value: user.totalListed ?? 0 },
-                { label: "My Collected", value: user.totalCollected ?? 0 },
-                { label: "Meals Saved", value: user.mealsSaved ?? 0 },
-                { label: "Weight Saved (kg)", value: user.weightSavedKg ?? 0 },
-              ]
-            : [
-                { label: "My Claims", value: user.totalClaims ?? 0 },
-                { label: "Completed Claims", value: user.completedClaims ?? 0 },
-                { label: "Active Food", value: platform.availableFood ?? 0 },
-                { label: "Providers", value: platform.providers ?? 0 },
-              ]
-          .map((item) => (
+          {userImpactItems.map((item) => (
             <div key={item.label} className="glass-card p-5">
               <p className="text-sm text-muted-foreground">{item.label}</p>
               <p className="text-3xl font-bold text-foreground mt-1">{item.value}</p>

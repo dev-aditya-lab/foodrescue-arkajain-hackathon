@@ -8,6 +8,7 @@ import foodRouter from './routes/food.routes.js';
 import claimRouter from './routes/claim.routes.js';
 import routeRouter from './routes/route.routes.js';
 import statsRouter from './routes/stats.routes.js';
+import notificationRouter from './routes/notification.routes.js';
 
 
 app.use(cors({
@@ -33,6 +34,9 @@ app.use('/api/route', routeRouter)
 
 // stats routes
 app.use('/api/stats', statsRouter)
+
+// notification routes
+app.use('/api/notifications', notificationRouter)
 
 app.get('/api/health', (req, res) => {
   // send a simple html with good css styling response to indicate the API is running

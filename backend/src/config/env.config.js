@@ -18,3 +18,5 @@ export const CLOUDINARY_API_KEY = requiredEnvVar("CLOUDINARY_API_KEY");
 export const CLOUDINARY_API_SECRET = requiredEnvVar("CLOUDINARY_API_SECRET");
 export const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || "food-rescue";
 export const GROQ_API_KEY = process.env.GROQ_API_KEY?.trim() || "";
+export const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || "";
+export const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL?.trim() || "noreply@devaditya.dev";

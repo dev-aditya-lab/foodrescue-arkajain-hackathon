@@ -287,3 +287,39 @@ export async function suggestFoodContent(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+/**
+ * Notifications: fetch latest notifications for current user.
+ */
+export async function fetchNotifications() {
+  return apiFetch("/notifications", {
+    method: "GET",
+  });
+}
+
+/**
+ * Notifications: unread badge count.
+ */
+export async function fetchUnreadNotificationCount() {
+  return apiFetch("/notifications/unread-count", {
+    method: "GET",
+  });
+}
+
+/**
+ * Notifications: mark one as read.
+ */
+export async function markNotificationAsRead(notificationId) {
+  return apiFetch(`/notifications/${notificationId}/read`, {
+    method: "PATCH",
+  });
+}
+
+/**
+ * Notifications: mark all as read.
+ */
+export async function markAllNotificationsAsRead() {
+  return apiFetch("/notifications/read-all", {
+    method: "PATCH",
+  });
+}

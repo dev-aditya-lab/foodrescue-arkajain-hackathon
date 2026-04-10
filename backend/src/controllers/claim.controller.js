@@ -1,5 +1,10 @@
 import claimModel from '../model/claim.model.js';
 import foodModel from '../model/food.model.js';
+import userModel from '../model/user.model.js';
+import {
+    notifyProviderFoodClaimed,
+    notifyReceiverClaimStatus,
+} from '../services/notification.service.js';
 
 export async function createClaim(req, res) {
     if (req.user.role !== 'receiver') {
@@ -60,6 +65,14 @@ export async function createClaim(req, res) {
         const populatedClaim = await claimModel.findById(newClaim._id)
             .populate('food')
             .populate('receiver', 'name email phone location');
+
+        const provider = await userModel.findById(reservedFood.provider).select('email');
+        notifyProviderFoodClaimed({
+            providerId: reservedFood.provider,
+            providerEmail: provider?.email || null,
+            foodTitle: reservedFood.title,
+            claimId: String(newClaim._id),
+        });
 
         return res.status(201).json({
             message: 'Claim created successfully',
@@ -156,6 +169,14 @@ export async function updateClaimStatus(req, res) {
         const updatedClaim = await claimModel.findById(claim._id)
             .populate('food')
             .populate('receiver', 'name email phone location');
+
+        notifyReceiverClaimStatus({
+            receiverId: updatedClaim.receiver?._id,
+            receiverEmail: updatedClaim.receiver?.email || null,
+            foodTitle: updatedClaim.food?.title || 'Food item',
+            status,
+            claimId: String(updatedClaim._id),
+        });
 
         return res.status(200).json({
             message: 'Claim status updated successfully',

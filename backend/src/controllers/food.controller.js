@@ -5,6 +5,7 @@ import {
     calculatePriorityScoreWithAI,
     generateFoodContentWithAI,
 } from "../services/groq.service.js";
+import { notifyNearbyReceiversForFood } from "../services/notification.service.js";
 
 function toNumber(value) {
     const num = Number(value);
@@ -300,6 +301,9 @@ export async function addFoodItem(req, res){
             estimatedWeightKg: parsedEstimatedWeightKg,
         });
         await newFoodItem.save();
+
+        notifyNearbyReceiversForFood(newFoodItem);
+
         res.status(201).json({ message: 'Food item added successfully', foodItem: newFoodItem });
     } catch (error) {
         console.error('Error adding food item:', error);

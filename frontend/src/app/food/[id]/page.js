@@ -258,10 +258,6 @@ export default function FoodDetailPage({ params }) {
                   )}
                 </button>
 
-                <Link href="/claim" className="btn-outline w-full text-center block">
-                  Claim This Food
-                </Link>
-
                 <Link href={`/map?foodId=${item.id}`} className="btn-outline w-full text-center block">
                   View Pickup Route
                 </Link>

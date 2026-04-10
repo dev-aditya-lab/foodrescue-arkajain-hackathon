@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { Leaf, Menu, X, ShoppingCart } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Leaf, Menu, X, ShoppingCart, Bell } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
+import { fetchUnreadNotificationCount } from "@/lib/api";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
   const { itemCount } = useCart();
@@ -23,8 +25,8 @@ export default function Navbar() {
         ...(role === "provider" ? [{ label: "Add Food", path: "/add-food" }] : []),
         { label: "Analytics", path: "/analytics" },
         { label: "Dashboard", path: "/dashboard" },
-        { label: "Profile", path: "/profile" },
         { label: "Map", path: "/map" },
+        { label: "Profile", path: "/profile" },
       ]
     : [
         { label: "Home", path: "/" },
@@ -39,6 +41,33 @@ export default function Navbar() {
     router.push("/login");
     router.refresh();
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let ignore = false;
+
+    async function loadUnread() {
+      try {
+        const response = await fetchUnreadNotificationCount();
+        if (!ignore) {
+          setUnreadCount(Number(response?.unreadCount) || 0);
+        }
+      } catch {
+        if (!ignore) {
+          setUnreadCount(0);
+        }
+      }
+    }
+
+    loadUnread();
+    const timer = setInterval(loadUnread, 30000);
+
+    return () => {
+      ignore = true;
+      clearInterval(timer);
+    };
+  }, [isAuthenticated]);
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-border shadow-sm">
@@ -83,6 +112,20 @@ export default function Navbar() {
                     {itemCount}
                   </span>
                 )}
+              </Link>
+            ) : null}
+
+            {!isLoading && isAuthenticated ? (
+              <Link
+                href="/notifications"
+                className="relative p-2.5 rounded-xl text-foreground hover:bg-muted transition-all duration-200"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 ? (
+                  <span className="absolute -top-0.5 -right-0.5 bg-secondary text-white text-[10px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center shadow-md">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
               </Link>
             ) : null}
 
