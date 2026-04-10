@@ -89,9 +89,19 @@ export async function fetchFoodItems(filters = {}) {
   const params = new URLSearchParams();
   if (filters.search) params.set("search", filters.search);
   if (filters.foodType) params.set("foodType", filters.foodType);
+  if (filters.sort) params.set("sort", filters.sort);
 
   const query = params.toString() ? `?${params.toString()}` : "";
   return apiFetch(`/food/list${query}`);
+}
+
+/**
+ * Receiver: fetch backend smart recommendations.
+ */
+export async function fetchRecommendedFoodItems() {
+  return apiFetch("/food/recommended", {
+    method: "GET",
+  });
 }
 
 /**

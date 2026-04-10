@@ -19,7 +19,9 @@ export default function Navbar() {
     ? [
         { label: "Home", path: "/" },
         { label: "Foods", path: "/all-foods" },
+        ...(role === "receiver" ? [{ label: "Recommended", path: "/recommended" }] : []),
         ...(role === "provider" ? [{ label: "Add Food", path: "/add-food" }] : []),
+        { label: "Analytics", path: "/analytics" },
         { label: "Dashboard", path: "/dashboard" },
         { label: "Profile", path: "/profile" },
         { label: "Map", path: "/map" },

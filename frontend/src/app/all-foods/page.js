@@ -29,7 +29,7 @@ export default function AllFoodsPage() {
       setIsLoading(true);
       setError("");
       try {
-        const response = await fetchFoodItems({ search: filters.search });
+        const response = await fetchFoodItems({ search: filters.search, sort: "dynamic" });
         let apiItems = (response?.foodItems || [])
           .map(mapFoodFromApi)
           .filter(Boolean);

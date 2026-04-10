@@ -6,6 +6,71 @@ import {
     generateFoodContentWithAI,
 } from "../services/groq.service.js";
 
+function toNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+function extractQuantityNumber(quantity) {
+    if (!quantity) return 0;
+    const match = String(quantity).match(/\d+(\.\d+)?/);
+    return match ? Number(match[0]) : 0;
+}
+
+function minutesUntilExpiry(expiryDate) {
+    const expiryMs = new Date(expiryDate).getTime() - Date.now();
+    return Math.max(0, Math.floor(expiryMs / 60000));
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const toRad = (d) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function computeDynamicPriorityScore(foodItem, distanceKm = null) {
+    const expiryMinutes = minutesUntilExpiry(foodItem.expiryDate);
+    const quantityNumber = extractQuantityNumber(foodItem.quantity);
+    const impactMeals = Number(foodItem.estimatedMeals) || 0;
+
+    let urgencyScore = 0;
+    if (expiryMinutes <= 60) urgencyScore = 55;
+    else if (expiryMinutes <= 240) urgencyScore = 42;
+    else if (expiryMinutes <= 1440) urgencyScore = 28;
+    else if (expiryMinutes <= 10080) urgencyScore = 14;
+    else urgencyScore = 5;
+
+    const quantityScore = Math.min(20, Math.round(quantityNumber * 2));
+    const impactScore = Math.min(20, Math.round(impactMeals * 1.5));
+
+    let distanceScore = 0;
+    if (Number.isFinite(distanceKm)) {
+        if (distanceKm <= 1) distanceScore = 20;
+        else if (distanceKm <= 3) distanceScore = 14;
+        else if (distanceKm <= 8) distanceScore = 8;
+        else distanceScore = 3;
+    }
+
+    return urgencyScore + quantityScore + impactScore + distanceScore;
+}
+
+function buildMatchReason(expiryMinutes, distanceKm, quantityText) {
+    const expiryText =
+        expiryMinutes < 60
+            ? `expires in ${expiryMinutes} min`
+            : `expires in ${Math.max(1, Math.round(expiryMinutes / 60))} hr`;
+    const distanceText = Number.isFinite(distanceKm)
+        ? `${distanceKm.toFixed(1)} km away`
+        : "distance unavailable";
+
+    return `Best match: ${distanceText}, ${expiryText}, qty ${quantityText}`;
+}
+
 function uploadFoodImage(fileBuffer) {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -42,7 +107,17 @@ export async function getMyFoodItems(req, res) {
 
 export async function getAvailableFoodItems(req, res) {
     try {
-        const { search = "", foodType = "" } = req.query;
+        const { search = "", foodType = "", sort = "priority" } = req.query;
+
+        await foodModel.updateMany(
+            {
+                status: { $in: ["available", "reserved"] },
+                expiryDate: { $lt: new Date() }
+            },
+            {
+                $set: { status: "expired" }
+            }
+        );
 
         const query = {
             status: "available"
@@ -66,9 +141,70 @@ export async function getAvailableFoodItems(req, res) {
             .populate("provider", "name email phone organizationName latitude longitude")
             .sort({ priorityScore: -1, createdAt: -1 });
 
-        return res.status(200).json({ foodItems });
+        const withDynamicPriority = foodItems.map((item) => {
+            const dynamicPriorityScore = computeDynamicPriorityScore(item);
+            return {
+                ...item.toObject(),
+                dynamicPriorityScore,
+            };
+        });
+
+        if (sort === "dynamic") {
+            withDynamicPriority.sort((a, b) => b.dynamicPriorityScore - a.dynamicPriorityScore);
+        }
+
+        return res.status(200).json({ foodItems: withDynamicPriority });
     } catch (error) {
         console.error("Error fetching food items:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+}
+
+export async function getRecommendedFoodItems(req, res) {
+    if (!req.user?._id) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+        if (req.user.role !== "receiver") {
+            return res.status(403).json({ message: "Only receivers can access recommendations" });
+        }
+
+        const userLat = toNumber(req.user.latitude);
+        const userLng = toNumber(req.user.longitude);
+
+        const availableFoodItems = await foodModel
+            .find({ status: "available", expiryDate: { $gt: new Date() } })
+            .populate("provider", "name email phone organizationName latitude longitude");
+
+        const recommendedFoodItems = availableFoodItems
+            .map((item) => {
+                const providerLat = toNumber(item.provider?.latitude);
+                const providerLng = toNumber(item.provider?.longitude);
+                const distanceKm =
+                    Number.isFinite(userLat) &&
+                    Number.isFinite(userLng) &&
+                    Number.isFinite(providerLat) &&
+                    Number.isFinite(providerLng)
+                        ? haversineKm(userLat, userLng, providerLat, providerLng)
+                        : null;
+
+                const expiryMinutes = minutesUntilExpiry(item.expiryDate);
+                const dynamicPriorityScore = computeDynamicPriorityScore(item, distanceKm);
+
+                return {
+                    ...item.toObject(),
+                    distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(1)) : null,
+                    dynamicPriorityScore,
+                    matchReason: buildMatchReason(expiryMinutes, distanceKm, item.quantity),
+                };
+            })
+            .sort((a, b) => b.dynamicPriorityScore - a.dynamicPriorityScore)
+            .slice(0, 30);
+
+        return res.status(200).json({ foodItems: recommendedFoodItems });
+    } catch (error) {
+        console.error("Error fetching recommended food items:", error);
         return res.status(500).json({ message: "Server error" });
     }
 }
@@ -129,7 +265,7 @@ export async function addFoodItem(req, res){
             return res.status(400).json({ message: 'estimatedWeightKg must be a valid positive number' });
         }
 
-        const priorityScore = await calculatePriorityScoreWithAI({
+        const aiPriorityScore = await calculatePriorityScoreWithAI({
             title,
             description,
             quantity,
@@ -155,7 +291,10 @@ export async function addFoodItem(req, res){
             imageUrl,
             expiryDate: expiry,
             status: 'available',
-            priorityScore,
+            priorityScore: Math.max(
+                Number(aiPriorityScore) || 0,
+                computeDynamicPriorityScore({ expiryDate: expiry, quantity, estimatedMeals: parsedEstimatedMeals })
+            ),
             organizationName: req.user.organizationName || null,
             estimatedMeals: parsedEstimatedMeals,
             estimatedWeightKg: parsedEstimatedWeightKg,
@@ -245,7 +384,7 @@ export async function editFoodItem(req, res) {
             existingFood.estimatedWeightKg = parsedWeight;
         }
 
-        existingFood.priorityScore = await calculatePriorityScoreWithAI({
+        const aiPriorityScore = await calculatePriorityScoreWithAI({
             title: existingFood.title,
             description: existingFood.description,
             quantity: existingFood.quantity,
@@ -254,6 +393,15 @@ export async function editFoodItem(req, res) {
             location: existingFood.location,
             organizationName: existingFood.organizationName,
         });
+
+        existingFood.priorityScore = Math.max(
+            Number(aiPriorityScore) || 0,
+            computeDynamicPriorityScore({
+                expiryDate: existingFood.expiryDate,
+                quantity: existingFood.quantity,
+                estimatedMeals: existingFood.estimatedMeals,
+            })
+        );
 
         await existingFood.save();
 

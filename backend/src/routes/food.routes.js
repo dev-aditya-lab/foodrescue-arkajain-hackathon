@@ -6,6 +6,7 @@ import {
 	getAvailableFoodItems,
 	getFoodItemById,
 	getMyFoodItems,
+	getRecommendedFoodItems,
 	suggestFoodContent,
 	editFoodItem,
 	removeFoodItem,
@@ -41,6 +42,13 @@ foodRouter.get('/list', getAvailableFoodItems);
  * @access Private (provider only)
  */
 foodRouter.get('/my-food', identifyUser, getMyFoodItems);
+
+/**
+ * @route GET /api/food/recommended
+ * @desc Get recommended food items for logged-in receiver.
+ * @access Private (receiver only)
+ */
+foodRouter.get('/recommended', identifyUser, getRecommendedFoodItems);
 
 /**
  * @route GET /api/food/:foodId
