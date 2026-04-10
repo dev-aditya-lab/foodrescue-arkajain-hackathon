@@ -88,6 +88,7 @@ export default function FoodDetailPage({ params }) {
   }
 
   const handleAdd = () => {
+    if (item.status !== "available") return;
     addItem(item);
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
@@ -233,13 +234,18 @@ export default function FoodDetailPage({ params }) {
               <>
                 <button
                   onClick={handleAdd}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-base transition-all duration-300 cursor-pointer ${
-                    isAdded
-                      ? "bg-secondary text-white"
-                      : "btn-primary"
+                  disabled={item.status !== "available"}
+                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-base transition-all duration-300 ${
+                    item.status !== "available"
+                      ? "bg-muted text-muted-foreground cursor-not-allowed"
+                      : isAdded
+                        ? "bg-secondary text-white cursor-pointer"
+                        : "btn-primary cursor-pointer"
                   }`}
                 >
-                  {isAdded ? (
+                  {item.status !== "available" ? (
+                    "No longer available"
+                  ) : isAdded ? (
                     <>
                       <Check className="w-5 h-5" />
                       Added to Basket!
@@ -254,6 +260,10 @@ export default function FoodDetailPage({ params }) {
 
                 <Link href="/claim" className="btn-outline w-full text-center block">
                   Claim This Food
+                </Link>
+
+                <Link href={`/map?foodId=${item.id}`} className="btn-outline w-full text-center block">
+                  View Pickup Route
                 </Link>
               </>
             ) : (

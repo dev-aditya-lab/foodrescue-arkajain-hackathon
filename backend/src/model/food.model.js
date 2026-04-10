@@ -55,6 +55,18 @@ const foodSchema = new mongoose.Schema({
         default: null
     },
 
+    estimatedMeals: {
+        type: Number,
+        min: [0, "Estimated meals must be >= 0"],
+        default: null
+    },
+
+    estimatedWeightKg: {
+        type: Number,
+        min: [0, "Estimated weight must be >= 0"],
+        default: null
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

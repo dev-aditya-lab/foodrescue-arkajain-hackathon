@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import {
@@ -10,12 +11,73 @@ import {
   Trash2,
   ShoppingBag,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { claimFoodItem } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { items, removeItem, clearCart } = useCart();
   const { role, isLoading } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const router = useRouter();
+
+  const handleCompletePickups = async () => {
+    if (!items.length || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const results = await Promise.all(
+        items.map(async (item) => {
+          try {
+            const response = await claimFoodItem(item.id);
+            return {
+              itemId: item.id,
+              itemName: item.name,
+              success: true,
+              claimId: response?.claim?._id || null,
+              message: response?.message || "Claim created successfully",
+            };
+          } catch (error) {
+            return {
+              itemId: item.id,
+              itemName: item.name,
+              success: false,
+              message: error.message || "Failed to create claim",
+            };
+          }
+        })
+      );
+
+      const succeededIds = results.filter((result) => result.success).map((result) => result.itemId);
+      succeededIds.forEach((id) => removeItem(id));
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          "lastClaimCheckout",
+          JSON.stringify({
+            createdAt: new Date().toISOString(),
+            results,
+          })
+        );
+      }
+
+      if (results.some((result) => result.success)) {
+        router.push("/claim");
+        return;
+      }
+
+      setSubmitError("None of the selected items could be claimed. Please refresh and try again.");
+    } catch {
+      setSubmitError("Something went wrong while submitting your claims.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="max-w-2xl mx-auto px-4 py-16">Loading...</div>;
@@ -37,7 +99,7 @@ export default function CartPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="space-y-6">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/15 to-secondary/15 flex items-center justify-center mx-auto">
+          <div className="w-24 h-24 rounded-3xl bg-linear-to-br from-primary/15 to-secondary/15 flex items-center justify-center mx-auto">
             <ShoppingBag className="w-12 h-12 text-primary/50" />
           </div>
           <div className="space-y-2">
@@ -81,12 +143,12 @@ export default function CartPage() {
             >
               <div className="flex gap-4">
                 {/* Thumbnail */}
-                <div className="w-24 h-24 bg-gradient-to-br from-primary/8 to-secondary/8 rounded-xl flex-shrink-0 flex items-center justify-center">
+                <div className="w-24 h-24 bg-linear-to-br from-primary/8 to-secondary/8 rounded-xl shrink-0 flex items-center justify-center">
                   <ShoppingBag className="w-8 h-8 text-primary/30" />
                 </div>
 
                 {/* Details */}
-                <div className="flex-grow space-y-2 min-w-0">
+                <div className="grow space-y-2 min-w-0">
                   <h3 className="text-base font-bold text-foreground leading-snug">
                     {item.name}
                   </h3>
@@ -127,7 +189,7 @@ export default function CartPage() {
                 {/* Remove */}
                 <button
                   onClick={() => removeItem(item.id)}
-                  className="flex-shrink-0 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors h-fit cursor-pointer"
+                  className="shrink-0 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors h-fit cursor-pointer"
                   aria-label="Remove item"
                 >
                   <Trash2 className="w-4.5 h-4.5" />
@@ -152,9 +214,20 @@ export default function CartPage() {
               </div>
 
               <div className="space-y-3">
-                <Link href="/claim" className="btn-primary w-full text-center block">
-                  Complete Pickups
-                </Link>
+                <button
+                  onClick={handleCompletePickups}
+                  disabled={isSubmitting}
+                  className="btn-primary w-full text-center block disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Submitting claims...
+                    </span>
+                  ) : (
+                    "Complete Pickups"
+                  )}
+                </button>
                 <Link
                   href="/all-foods"
                   className="btn-outline w-full text-center block"
@@ -162,6 +235,10 @@ export default function CartPage() {
                   Continue Shopping
                 </Link>
               </div>
+
+              {submitError ? (
+                <p className="text-sm text-destructive">{submitError}</p>
+              ) : null}
 
               <button
                 onClick={clearCart}

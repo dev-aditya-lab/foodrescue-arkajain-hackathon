@@ -103,6 +103,21 @@ export async function getFoodItemById(id) {
 }
 
 /**
+ * Get pickup route from logged-in user to provider for a given food item.
+ */
+export async function fetchPickupRoute(foodId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.userLat !== undefined && options.userLat !== null) {
+    params.set("userLat", String(options.userLat));
+  }
+  if (options.userLng !== undefined && options.userLng !== null) {
+    params.set("userLng", String(options.userLng));
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch(`/route/food/${foodId}${query}`);
+}
+
+/**
  * Create a new food item listing
  * @param {Object} data - { name, quantity, expiryTime, location, foodType, description, ... }
  */

@@ -6,6 +6,8 @@ import { FRONTEND_URL } from './config/env.config.js';
 import AuthRouter from './routes/auth.routes.js';
 import foodRouter from './routes/food.routes.js';
 import claimRouter from './routes/claim.routes.js';
+import routeRouter from './routes/route.routes.js';
+import statsRouter from './routes/stats.routes.js';
 
 
 app.use(cors({
@@ -25,6 +27,12 @@ app.use('/api/food',foodRouter)
 
 //claim routes
 app.use('/api/claim', claimRouter)
+
+// route/pickup routes
+app.use('/api/route', routeRouter)
+
+// stats routes
+app.use('/api/stats', statsRouter)
 
 app.get('/api/health', (req, res) => {
   // send a simple html with good css styling response to indicate the API is running

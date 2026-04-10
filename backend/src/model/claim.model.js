@@ -26,4 +26,14 @@ const claimSchema = new mongoose.Schema({
   }
 });
 
+claimSchema.index(
+  { food: 1, receiver: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: { $in: ["pending", "accepted"] }
+    }
+  }
+);
+
 export default mongoose.model("Claim", claimSchema);

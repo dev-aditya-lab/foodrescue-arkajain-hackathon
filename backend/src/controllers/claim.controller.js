@@ -10,15 +10,6 @@ export async function createClaim(req, res) {
         const { foodId } = req.params;
         const { pickupTime } = req.body;
 
-        const foodItem = await foodModel.findById(foodId);
-        if (!foodItem) {
-            return res.status(404).json({ message: 'Food item not found' });
-        }
-
-        if (foodItem.status !== 'available') {
-            return res.status(400).json({ message: 'Food item is not available for claim' });
-        }
-
         const existingClaim = await claimModel.findOne({
             food: foodId,
             receiver: req.user._id,
@@ -37,11 +28,34 @@ export async function createClaim(req, res) {
             }
         }
 
-        const newClaim = await claimModel.create({
-            food: foodId,
-            receiver: req.user._id,
-            pickupTime: parsedPickupTime
-        });
+        const reservedFood = await foodModel.findOneAndUpdate(
+            { _id: foodId, status: 'available' },
+            { $set: { status: 'reserved' } },
+            { new: true }
+        );
+
+        if (!reservedFood) {
+            const foodExists = await foodModel.exists({ _id: foodId });
+            if (!foodExists) {
+                return res.status(404).json({ message: 'Food item not found' });
+            }
+            return res.status(409).json({ message: 'Food item is no longer available for claim' });
+        }
+
+        let newClaim;
+        try {
+            newClaim = await claimModel.create({
+                food: foodId,
+                receiver: req.user._id,
+                pickupTime: parsedPickupTime
+            });
+        } catch (error) {
+            await foodModel.updateOne(
+                { _id: foodId, status: 'reserved' },
+                { $set: { status: 'available' } }
+            );
+            throw error;
+        }
 
         const populatedClaim = await claimModel.findById(newClaim._id)
             .populate('food')
@@ -109,6 +123,18 @@ export async function updateClaimStatus(req, res) {
             return res.status(404).json({ message: 'Claim not found' });
         }
 
+        if (['completed', 'rejected'].includes(claim.status)) {
+            return res.status(400).json({ message: `Cannot update a ${claim.status} claim` });
+        }
+
+        const validTransition =
+            (claim.status === 'pending' && ['accepted', 'rejected'].includes(status)) ||
+            (claim.status === 'accepted' && ['completed', 'rejected'].includes(status));
+
+        if (!validTransition) {
+            return res.status(400).json({ message: `Invalid transition from ${claim.status} to ${status}` });
+        }
+
         if (claim.food.provider.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'You can only update claims for your own food items' });
         }
@@ -121,7 +147,7 @@ export async function updateClaimStatus(req, res) {
             claim.food.status = 'reserved';
         } else if (status === 'completed') {
             claim.food.status = 'collected';
-        } else if (status === 'rejected' && previousClaimStatus === 'accepted') {
+        } else if (status === 'rejected' && ['pending', 'accepted'].includes(previousClaimStatus)) {
             claim.food.status = 'available';
         }
 
@@ -157,7 +183,7 @@ export async function deleteClaim(req, res) {
             return res.status(403).json({ message: 'You are not allowed to delete this claim' });
         }
 
-        if (claim.status === 'accepted' && claim.food.status === 'reserved') {
+        if (['pending', 'accepted'].includes(claim.status) && claim.food.status === 'reserved') {
             claim.food.status = 'available';
             await claim.food.save();
         }

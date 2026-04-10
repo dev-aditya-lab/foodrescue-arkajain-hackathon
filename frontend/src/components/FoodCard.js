@@ -19,8 +19,10 @@ export default function FoodCard({
   providerEmail,
   pickupTime,
   foodType,
+  status,
 }) {
   const isUrgent = expiryTime < 60;
+  const isAvailable = status === "available";
   const { addItem } = useCart();
   const { role } = useAuth();
   const [isAdded, setIsAdded] = useState(false);
@@ -28,6 +30,7 @@ export default function FoodCard({
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isAvailable) return;
     addItem({
       id,
       name,
@@ -41,6 +44,7 @@ export default function FoodCard({
       image,
       pickupTime,
       foodType,
+      status,
     });
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
@@ -140,13 +144,18 @@ export default function FoodCard({
           {role === "receiver" ? (
             <button
               onClick={handleAddToCart}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 cursor-pointer ${
-                isAdded
-                  ? "bg-secondary text-white"
-                  : "btn-primary"
+              disabled={!isAvailable}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                !isAvailable
+                  ? "bg-muted text-muted-foreground cursor-not-allowed"
+                  : isAdded
+                    ? "bg-secondary text-white cursor-pointer"
+                    : "btn-primary cursor-pointer"
               }`}
             >
-              {isAdded ? (
+              {!isAvailable ? (
+                "Not available"
+              ) : isAdded ? (
                 <>
                   <Check className="w-4 h-4" />
                   Added!

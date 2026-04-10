@@ -28,6 +28,8 @@ export default function AddFoodPage() {
     quantity: "",
     foodType: "",
     expiryDate: "",
+    estimatedMeals: "",
+    estimatedWeightKg: "",
   });
   const [aiDetails, setAiDetails] = useState("");
   const [suggestion, setSuggestion] = useState(null);
@@ -50,6 +52,8 @@ export default function AddFoodPage() {
       payload.append("quantity", form.quantity);
       payload.append("foodType", form.foodType);
       payload.append("expiryDate", form.expiryDate);
+      payload.append("estimatedMeals", form.estimatedMeals);
+      payload.append("estimatedWeightKg", form.estimatedWeightKg);
       if (imageFile) {
         payload.append("image", imageFile);
       }
@@ -321,6 +325,36 @@ export default function AddFoodPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label htmlFor="estimatedMeals" className="form-label">Estimated Meals (manual)</label>
+              <input
+                id="estimatedMeals"
+                name="estimatedMeals"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g., 20"
+                value={form.estimatedMeals}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="estimatedWeightKg" className="form-label">Estimated Weight in KG (manual)</label>
+              <input
+                id="estimatedWeightKg"
+                name="estimatedWeightKg"
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="e.g., 5.0"
+                value={form.estimatedWeightKg}
+                onChange={handleChange}
+                className="form-input"
+              />
             </div>
           </div>
         </div>

@@ -102,7 +102,7 @@ export async function addFoodItem(req, res){
     const providerID = req.user._id;
     const ProviderLocation = req.user.location || `${req.user.latitude},${req.user.longitude}`;
     try {
-        const { title, description, quantity, foodType, expiryDate } = req.body;
+        const { title, description, quantity, foodType, expiryDate, estimatedMeals, estimatedWeightKg } = req.body;
         if (!title || !description || !quantity || !foodType || !expiryDate) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
@@ -110,6 +110,23 @@ export async function addFoodItem(req, res){
 
         if (Number.isNaN(expiry.getTime())) {
             return res.status(400).json({ message: 'Invalid expiryDate' });
+        }
+
+        const parsedEstimatedMeals =
+            estimatedMeals === undefined || estimatedMeals === null || estimatedMeals === ""
+                ? null
+                : Number(estimatedMeals);
+        const parsedEstimatedWeightKg =
+            estimatedWeightKg === undefined || estimatedWeightKg === null || estimatedWeightKg === ""
+                ? null
+                : Number(estimatedWeightKg);
+
+        if (parsedEstimatedMeals !== null && (!Number.isFinite(parsedEstimatedMeals) || parsedEstimatedMeals < 0)) {
+            return res.status(400).json({ message: 'estimatedMeals must be a valid positive number' });
+        }
+
+        if (parsedEstimatedWeightKg !== null && (!Number.isFinite(parsedEstimatedWeightKg) || parsedEstimatedWeightKg < 0)) {
+            return res.status(400).json({ message: 'estimatedWeightKg must be a valid positive number' });
         }
 
         const priorityScore = await calculatePriorityScoreWithAI({
@@ -139,7 +156,9 @@ export async function addFoodItem(req, res){
             expiryDate: expiry,
             status: 'available',
             priorityScore,
-            organizationName: req.user.organizationName || null
+            organizationName: req.user.organizationName || null,
+            estimatedMeals: parsedEstimatedMeals,
+            estimatedWeightKg: parsedEstimatedWeightKg,
         });
         await newFoodItem.save();
         res.status(201).json({ message: 'Food item added successfully', foodItem: newFoodItem });
@@ -181,7 +200,7 @@ export async function editFoodItem(req, res) {
 
     try {
         const { foodId } = req.params;
-        const { title, description, quantity, foodType, expiryDate, status } = req.body;
+        const { title, description, quantity, foodType, expiryDate, status, estimatedMeals, estimatedWeightKg } = req.body;
 
         const existingFood = await foodModel.findById(foodId);
         if (!existingFood) {
@@ -211,6 +230,20 @@ export async function editFoodItem(req, res) {
         }
         if (foodType !== undefined) existingFood.foodType = foodType;
         if (status !== undefined) existingFood.status = status;
+        if (estimatedMeals !== undefined) {
+            const parsedMeals = estimatedMeals === null || estimatedMeals === "" ? null : Number(estimatedMeals);
+            if (parsedMeals !== null && (!Number.isFinite(parsedMeals) || parsedMeals < 0)) {
+                return res.status(400).json({ message: 'estimatedMeals must be a valid positive number' });
+            }
+            existingFood.estimatedMeals = parsedMeals;
+        }
+        if (estimatedWeightKg !== undefined) {
+            const parsedWeight = estimatedWeightKg === null || estimatedWeightKg === "" ? null : Number(estimatedWeightKg);
+            if (parsedWeight !== null && (!Number.isFinite(parsedWeight) || parsedWeight < 0)) {
+                return res.status(400).json({ message: 'estimatedWeightKg must be a valid positive number' });
+            }
+            existingFood.estimatedWeightKg = parsedWeight;
+        }
 
         existingFood.priorityScore = await calculatePriorityScoreWithAI({
             title: existingFood.title,
