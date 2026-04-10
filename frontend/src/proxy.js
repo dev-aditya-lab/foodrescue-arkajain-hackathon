@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 const PUBLIC_PAGES = new Set(["/login", "/register"]);
+const PROVIDER_ONLY_PREFIXES = ["/add-food"];
+const RECEIVER_ONLY_PREFIXES = ["/cart", "/claim"];
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -8,10 +10,16 @@ function getAuthCheckUrl() {
   return `${API_BASE_URL.replace(/\/$/, "")}/auth/get-me`;
 }
 
+function matchesPrefix(pathname, prefixes) {
+  return prefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 async function verifyUserFromBackend(request) {
   const cookieHeader = request.headers.get("cookie");
   if (!cookieHeader) {
-    return false;
+    return { isAuthenticated: false, role: null };
   }
 
   try {
@@ -23,16 +31,22 @@ async function verifyUserFromBackend(request) {
       cache: "no-store",
     });
 
-    return response.ok;
+    if (!response.ok) {
+      return { isAuthenticated: false, role: null };
+    }
+
+    const data = await response.json().catch(() => ({}));
+    const role = data?.user?.role || null;
+    return { isAuthenticated: true, role };
   } catch {
-    return false;
+    return { isAuthenticated: false, role: null };
   }
 }
 
 export async function proxy(request) {
   const { pathname, search } = request.nextUrl;
   const isPublicPage = PUBLIC_PAGES.has(pathname);
-  const isAuthenticated = await verifyUserFromBackend(request);
+  const { isAuthenticated, role } = await verifyUserFromBackend(request);
 
   if (!isPublicPage && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
@@ -42,6 +56,14 @@ export async function proxy(request) {
 
   if (isPublicPage && isAuthenticated) {
     return NextResponse.redirect(new URL("/all-foods", request.url));
+  }
+
+  if (isAuthenticated && matchesPrefix(pathname, PROVIDER_ONLY_PREFIXES) && role !== "provider") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isAuthenticated && matchesPrefix(pathname, RECEIVER_ONLY_PREFIXES) && role !== "receiver") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

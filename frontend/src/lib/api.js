@@ -74,7 +74,7 @@ export async function getFoodItemById(id) {
  * @param {Object} data - { name, quantity, expiryTime, location, foodType, description, ... }
  */
 export async function createFoodItem(data) {
-  return apiFetch("/food-items", {
+  return apiFetch("/food/add-food", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -86,7 +86,7 @@ export async function createFoodItem(data) {
  * @param {Object} claimData - { claimerName, claimerPhone, claimerEmail }
  */
 export async function claimFoodItem(id, claimData = {}) {
-  return apiFetch(`/food-items/${id}/claim`, {
+  return apiFetch(`/claim/create-claim/${id}`, {
     method: "POST",
     body: JSON.stringify(claimData),
   });
@@ -97,7 +97,7 @@ export async function claimFoodItem(id, claimData = {}) {
  * @param {string} id
  */
 export async function deleteFoodItem(id) {
-  return apiFetch(`/food-items/${id}`, {
+  return apiFetch(`/food/delete-food/${id}`, {
     method: "DELETE",
   });
 }
@@ -150,5 +150,42 @@ export async function getMe() {
 export async function logout() {
   return apiFetch("/auth/logout", {
     method: "POST",
+  });
+}
+
+/**
+ * Receiver: claims created by logged-in receiver
+ */
+export async function fetchMyClaims() {
+  return apiFetch("/claim/my-claims", {
+    method: "GET",
+  });
+}
+
+/**
+ * Provider: claims created on provider's food listings
+ */
+export async function fetchIncomingClaims() {
+  return apiFetch("/claim/incoming-claims", {
+    method: "GET",
+  });
+}
+
+/**
+ * Provider: update claim status
+ */
+export async function updateClaimStatus(claimId, status) {
+  return apiFetch(`/claim/update-status/${claimId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+/**
+ * Provider: get own food listings
+ */
+export async function fetchMyFoodItems() {
+  return apiFetch("/food/my-food", {
+    method: "GET",
   });
 }

@@ -4,10 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, getMe } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,11 +30,8 @@ export default function LoginPage() {
         throw new Error("Backend unavailable. Please check if backend server is running.");
       }
 
-      const me = await getMe().catch(() => null);
-      const user = me?.user || response?.user;
-      if (user) {
-        localStorage.setItem("authUser", JSON.stringify(user));
-      }
+      await getMe().catch(() => response?.user || null);
+      await refreshUser();
 
       const nextPath = searchParams.get("next");
       router.push(nextPath || "/all-foods");

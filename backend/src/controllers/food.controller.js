@@ -1,5 +1,19 @@
 import foodModel from "../model/food.model.js";
 
+export async function getMyFoodItems(req, res) {
+    if (req.user.role !== 'provider') {
+        return res.status(403).json({ message: 'Only providers can view their food items' });
+    }
+
+    try {
+        const foodItems = await foodModel.find({ provider: req.user._id }).sort({ createdAt: -1 });
+        return res.status(200).json({ foodItems });
+    } catch (error) {
+        console.error('Error fetching provider food items:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+}
+
 export async function addFoodItem(req, res){
     //  * @data { title, description, quantity,foodType (["veg", "non-veg", "mixed"]),provider (ref:user),location(ref: user's saved loacation), expiryDate,status (["available", "reserved", "collected", "expired"]), priorityScore (calculated based on expiryDate and quantity),orgnizationName (ref: user's organizationName }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Clock, MapPin, Apple, Phone, Mail, ShoppingCart, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function FoodCard({
   id,
@@ -21,6 +22,7 @@ export default function FoodCard({
 }) {
   const isUrgent = expiryTime < 60;
   const { addItem } = useCart();
+  const { role } = useAuth();
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAddToCart = (e) => {
@@ -135,26 +137,32 @@ export default function FoodCard({
 
         {/* CTA */}
         <div className="px-4 pb-4">
-          <button
-            onClick={handleAddToCart}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 cursor-pointer ${
-              isAdded
-                ? "bg-secondary text-white"
-                : "btn-primary"
-            }`}
-          >
-            {isAdded ? (
-              <>
-                <Check className="w-4 h-4" />
-                Added!
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="w-4 h-4" />
-                Add to Basket
-              </>
-            )}
-          </button>
+          {role === "receiver" ? (
+            <button
+              onClick={handleAddToCart}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 cursor-pointer ${
+                isAdded
+                  ? "bg-secondary text-white"
+                  : "btn-primary"
+              }`}
+            >
+              {isAdded ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Added!
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-4 h-4" />
+                  Add to Basket
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="w-full text-center py-2.5 rounded-lg text-xs font-semibold bg-muted text-muted-foreground">
+              Only receivers can order or claim food
+            </div>
+          )}
         </div>
       </div>
     </Link>

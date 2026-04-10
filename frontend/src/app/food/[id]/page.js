@@ -16,12 +16,14 @@ import { mockFoodItems } from "@/lib/mockData";
 import CountdownTimer from "@/components/CountdownTimer";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function FoodDetailPage({ params }) {
   const resolvedParams = use(params);
   const { id } = resolvedParams;
   const item = mockFoodItems.find((f) => f.id === id);
   const { addItem } = useCart();
+  const { role } = useAuth();
   const [isAdded, setIsAdded] = useState(false);
 
   if (!item) {
@@ -183,31 +185,38 @@ export default function FoodDetailPage({ params }) {
             </div>
 
             {/* Add to Cart */}
-            <button
-              onClick={handleAdd}
-              className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-base transition-all duration-300 cursor-pointer ${
-                isAdded
-                  ? "bg-secondary text-white"
-                  : "btn-primary"
-              }`}
-            >
-              {isAdded ? (
-                <>
-                  <Check className="w-5 h-5" />
-                  Added to Basket!
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="w-5 h-5" />
-                  Add to Basket
-                </>
-              )}
-            </button>
+            {role === "receiver" ? (
+              <>
+                <button
+                  onClick={handleAdd}
+                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-base transition-all duration-300 cursor-pointer ${
+                    isAdded
+                      ? "bg-secondary text-white"
+                      : "btn-primary"
+                  }`}
+                >
+                  {isAdded ? (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Added to Basket!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5" />
+                      Add to Basket
+                    </>
+                  )}
+                </button>
 
-            {/* Claim */}
-            <Link href="/claim" className="btn-outline w-full text-center block">
-              Claim This Food
-            </Link>
+                <Link href="/claim" className="btn-outline w-full text-center block">
+                  Claim This Food
+                </Link>
+              </>
+            ) : (
+              <div className="w-full text-center py-3 rounded-xl text-sm font-semibold bg-muted text-muted-foreground">
+                Only receivers can claim or order food
+              </div>
+            )}
           </div>
         </div>
       </div>

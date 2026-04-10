@@ -5,34 +5,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Clock, MapPin, Tag, FileText, Package, Loader2, CheckCircle } from "lucide-react";
 import { createFoodItem } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const FOOD_TYPES = [
-  "Vegetables",
-  "Fruits",
-  "Bakery",
-  "Dairy",
-  "Prepared Food",
-  "Beverages",
-  "Grains",
-  "Snacks",
-  "Other",
+  { label: "Veg", value: "veg" },
+  { label: "Non-Veg", value: "non-veg" },
+  { label: "Mixed", value: "mixed" },
 ];
 
 export default function AddFoodPage() {
   const router = useRouter();
+  const { role, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
-    name: "",
+    title: "",
     description: "",
     quantity: "",
     foodType: "",
-    expiryTime: "",
-    location: "",
-    pickupTime: "",
-    providerName: "",
-    providerPhone: "",
-    providerEmail: "",
+    expiryDate: "",
   });
 
   const handleChange = (e) => {
@@ -41,40 +33,45 @@ export default function AddFoodPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     setIsSubmitting(true);
 
     try {
-      // Try to submit to backend
-      const result = await createFoodItem({
-        name: form.name,
+      await createFoodItem({
+        title: form.title,
         description: form.description,
-        quantity: form.quantity,
+        quantity: Number(form.quantity),
         foodType: form.foodType,
-        expiryTime: parseInt(form.expiryTime),
-        location: form.location,
-        pickupTime: form.pickupTime,
-        provider: form.providerName,
-        providerPhone: form.providerPhone,
-        providerEmail: form.providerEmail,
+        expiryDate: form.expiryDate,
       });
 
       setIsSuccess(true);
 
-      // Redirect after short delay
       setTimeout(() => {
-        router.push("/all-foods");
+        router.push("/dashboard");
       }, 2000);
     } catch (error) {
-      // If backend is not available, show success anyway for demo
-      console.warn("Backend not available, showing demo success.", error);
-      setIsSuccess(true);
-      setTimeout(() => {
-        router.push("/all-foods");
-      }, 2000);
+      setError(error.message || "Failed to add food item.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto px-4 py-12">Loading...</div>;
+  }
+
+  if (role !== "provider") {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        <div className="glass-card p-8 space-y-4">
+          <h1 className="text-2xl font-bold">Provider Access Only</h1>
+          <p className="text-muted-foreground">Only providers can add food items.</p>
+          <Link href="/dashboard" className="btn-primary inline-flex">Go to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -125,12 +122,12 @@ export default function AddFoodPage() {
           <div>
             <label htmlFor="name" className="form-label">Food Name *</label>
             <input
-              id="name"
-              name="name"
+              id="title"
+              name="title"
               type="text"
               required
               placeholder="e.g., Fresh Organic Vegetables"
-              value={form.name}
+              value={form.title}
               onChange={handleChange}
               className="form-input"
             />
@@ -181,8 +178,8 @@ export default function AddFoodPage() {
               >
                 <option value="">Select type...</option>
                 {FOOD_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                  <option key={type.value} value={type.value}>
+                    {type.label}
                   </option>
                 ))}
               </select>
@@ -190,111 +187,36 @@ export default function AddFoodPage() {
           </div>
         </div>
 
-        {/* Pickup Info */}
         <div className="glass-card p-6 space-y-5">
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <MapPin className="w-5 h-5 text-secondary" />
-            Pickup Information
+            Item Timing
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
-              <label htmlFor="expiryTime" className="form-label">
+              <label htmlFor="expiryDate" className="form-label">
                 <Clock className="w-3.5 h-3.5 inline mr-1" />
-                Expiry Time (minutes) *
+                Expiry Date & Time *
               </label>
               <input
-                id="expiryTime"
-                name="expiryTime"
-                type="number"
+                id="expiryDate"
+                name="expiryDate"
+                type="datetime-local"
                 required
-                min="1"
-                placeholder="e.g., 120"
-                value={form.expiryTime}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-            <div>
-              <label htmlFor="pickupTime" className="form-label">Pickup Window *</label>
-              <input
-                id="pickupTime"
-                name="pickupTime"
-                type="text"
-                required
-                placeholder="e.g., Today 2:00 PM - 6:00 PM"
-                value={form.pickupTime}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="location" className="form-label">Pickup Location *</label>
-            <input
-              id="location"
-              name="location"
-              type="text"
-              required
-              placeholder="e.g., Downtown Market, 123 Main Street"
-              value={form.location}
-              onChange={handleChange}
-              className="form-input"
-            />
-          </div>
-        </div>
-
-        {/* Provider Info */}
-        <div className="glass-card p-6 space-y-5">
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Plus className="w-5 h-5 text-accent" />
-            Your Contact Details
-          </h2>
-
-          <div>
-            <label htmlFor="providerName" className="form-label">Name / Organization *</label>
-            <input
-              id="providerName"
-              name="providerName"
-              type="text"
-              required
-              placeholder="e.g., Fresh Market Co."
-              value={form.providerName}
-              onChange={handleChange}
-              className="form-input"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="providerPhone" className="form-label">Phone *</label>
-              <input
-                id="providerPhone"
-                name="providerPhone"
-                type="tel"
-                required
-                placeholder="e.g., +91 98765 43210"
-                value={form.providerPhone}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-            <div>
-              <label htmlFor="providerEmail" className="form-label">Email *</label>
-              <input
-                id="providerEmail"
-                name="providerEmail"
-                type="email"
-                required
-                placeholder="e.g., you@example.com"
-                value={form.providerEmail}
+                value={form.expiryDate}
                 onChange={handleChange}
                 className="form-input"
               />
             </div>
           </div>
         </div>
+
+        {error ? (
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        ) : null}
 
         {/* Submit */}
         <button

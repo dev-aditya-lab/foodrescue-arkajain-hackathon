@@ -1,7 +1,28 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, PartyPopper, MapPin, Clock, Phone, Share2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ClaimPage() {
+  const { role, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto px-4 py-16">Loading...</div>;
+  }
+
+  if (role !== "receiver") {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="glass-card p-8 space-y-4 text-center">
+          <h1 className="text-2xl font-bold text-foreground">Receiver Access Only</h1>
+          <p className="text-muted-foreground">Only receivers can claim food orders.</p>
+          <Link href="/dashboard" className="btn-primary inline-flex">Go to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 animate-fade-in">
       <Link
@@ -14,7 +35,7 @@ export default function ClaimPage() {
 
       <div className="glass-card p-8 sm:p-12 text-center space-y-8">
         {/* Celebration Icon */}
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-secondary/20 to-primary/20 flex items-center justify-center mx-auto animate-float">
+        <div className="w-24 h-24 rounded-3xl bg-linear-to-br from-secondary/20 to-primary/20 flex items-center justify-center mx-auto animate-float">
           <PartyPopper className="w-12 h-12 text-secondary" />
         </div>
 
@@ -28,7 +49,7 @@ export default function ClaimPage() {
         </div>
 
         {/* Success Banner */}
-        <div className="bg-gradient-to-br from-secondary/10 to-primary/5 rounded-2xl p-8 space-y-2 border border-secondary/20">
+        <div className="bg-linear-to-br from-secondary/10 to-primary/5 rounded-2xl p-8 space-y-2 border border-secondary/20">
           <p className="text-3xl font-extrabold text-secondary">
             You saved 5 meals! 🎉
           </p>
@@ -70,7 +91,7 @@ export default function ClaimPage() {
             },
           ].map((step, idx) => (
             <div key={step.title} className="flex items-start gap-4">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${step.color}`}
                 >

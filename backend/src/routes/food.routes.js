@@ -2,6 +2,7 @@ import express from 'express';
 import { identifyUser } from '../middleware/auth.middleware.js';
 import {
 	addFoodItem,
+	getMyFoodItems,
 	editFoodItem,
 	removeFoodItem,
 	deleteFoodItem
@@ -15,6 +16,13 @@ const foodRouter = express.Router();
  * @body { title, description, quantity, foodType, expiryDate }
  */
 foodRouter.post('/add-food', identifyUser,addFoodItem)
+
+/**
+ * @route GET /api/food/my-food
+ * @desc Get all food items created by logged-in provider.
+ * @access Private (provider only)
+ */
+foodRouter.get('/my-food', identifyUser, getMyFoodItems);
 
 /**
  * @route PATCH /api/food/edit-food/:foodId

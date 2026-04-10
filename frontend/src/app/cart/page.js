@@ -11,9 +11,27 @@ import {
   ShoppingBag,
   ArrowRight,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CartPage() {
   const { items, removeItem, clearCart } = useCart();
+  const { role, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto px-4 py-16">Loading...</div>;
+  }
+
+  if (role !== "receiver") {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
+        <div className="glass-card p-8 space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">Receiver Access Only</h1>
+          <p className="text-muted-foreground">Only receivers can order or claim food.</p>
+          <Link href="/dashboard" className="btn-primary inline-flex">Go to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

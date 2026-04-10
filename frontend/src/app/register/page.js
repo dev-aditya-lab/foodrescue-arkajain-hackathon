@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { register, getMe } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const providerOptions = [
   { value: "restaurant", label: "Restaurant" },
@@ -15,6 +16,7 @@ const providerOptions = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -52,11 +54,8 @@ export default function RegisterPage() {
         throw new Error("Backend unavailable. Please check if backend server is running.");
       }
 
-      const me = await getMe().catch(() => null);
-      const user = me?.user || response?.user;
-      if (user) {
-        localStorage.setItem("authUser", JSON.stringify(user));
-      }
+      await getMe().catch(() => response?.user || null);
+      await refreshUser();
 
       router.push("/all-foods");
       router.refresh();

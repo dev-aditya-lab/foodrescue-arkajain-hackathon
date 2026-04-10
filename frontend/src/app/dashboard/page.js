@@ -1,0 +1,208 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import {
+  fetchIncomingClaims,
+  fetchMyClaims,
+  fetchMyFoodItems,
+  updateClaimStatus,
+} from "@/lib/api";
+
+export default function DashboardPage() {
+  const { user, role, isLoading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [incomingClaims, setIncomingClaims] = useState([]);
+  const [myClaims, setMyClaims] = useState([]);
+  const [myFoodItems, setMyFoodItems] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadDashboardData() {
+      if (authLoading) return;
+      setLoading(true);
+      setError("");
+
+      try {
+        if (role === "provider") {
+          const [claimsRes, foodRes] = await Promise.all([
+            fetchIncomingClaims(),
+            fetchMyFoodItems(),
+          ]);
+
+          if (!ignore) {
+            setIncomingClaims(claimsRes?.claims || []);
+            setMyFoodItems(foodRes?.foodItems || []);
+          }
+        } else {
+          const claimsRes = await fetchMyClaims();
+          if (!ignore) {
+            setMyClaims(claimsRes?.claims || []);
+          }
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message || "Failed to load dashboard.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboardData();
+    return () => {
+      ignore = true;
+    };
+  }, [authLoading, role]);
+
+  const providerStats = useMemo(() => {
+    const totalFood = myFoodItems.length;
+    const availableFood = myFoodItems.filter((item) => item.status === "available").length;
+    const pendingClaims = incomingClaims.filter((claim) => claim.status === "pending").length;
+    return { totalFood, availableFood, pendingClaims };
+  }, [incomingClaims, myFoodItems]);
+
+  const receiverStats = useMemo(() => {
+    const totalClaims = myClaims.length;
+    const activeClaims = myClaims.filter((claim) => ["pending", "accepted"].includes(claim.status)).length;
+    const completedClaims = myClaims.filter((claim) => claim.status === "completed").length;
+    return { totalClaims, activeClaims, completedClaims };
+  }, [myClaims]);
+
+  const handleClaimStatusUpdate = async (claimId, status) => {
+    try {
+      await updateClaimStatus(claimId, status);
+      setIncomingClaims((prev) => prev.map((claim) => (claim._id === claimId ? { ...claim, status } : claim)));
+    } catch (err) {
+      setError(err.message || "Unable to update claim status.");
+    }
+  };
+
+  if (authLoading || loading) {
+    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">Loading dashboard...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="glass-card p-8 space-y-4">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">No active user session found.</p>
+          <Link href="/login" className="btn-primary inline-flex">Go to Login</Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 animate-fade-in">
+      <div>
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">{role === "provider" ? "Provider Dashboard" : "Receiver Dashboard"}</h1>
+        <p className="text-muted-foreground mt-2">Welcome {user.name}. Role-specific details and actions are shown below.</p>
+      </div>
+
+      {error ? (
+        <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
+          {error}
+        </div>
+      ) : null}
+
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {(role === "provider"
+          ? [
+              { label: "My Food Items", value: providerStats.totalFood },
+              { label: "Available Food", value: providerStats.availableFood },
+              { label: "Pending Claims", value: providerStats.pendingClaims },
+            ]
+          : [
+              { label: "Total Claims", value: receiverStats.totalClaims },
+              { label: "Active Claims", value: receiverStats.activeClaims },
+              { label: "Completed", value: receiverStats.completedClaims },
+            ]).map((stat) => (
+          <div key={stat.label} className="glass-card p-5">
+            <p className="text-sm text-muted-foreground">{stat.label}</p>
+            <p className="text-3xl font-bold text-foreground mt-1">{stat.value}</p>
+          </div>
+        ))}
+      </section>
+
+      {role === "provider" ? (
+        <>
+          <section className="glass-card p-6 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-bold">My Food Listings</h2>
+              <Link href="/add-food" className="btn-primary">Add Food</Link>
+            </div>
+
+            {myFoodItems.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No food listings yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {myFoodItems.slice(0, 8).map((item) => (
+                  <div key={item._id} className="border border-border rounded-lg p-4 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-foreground">{item.title}</p>
+                      <p className="text-sm text-muted-foreground">Qty: {item.quantity} • Type: {item.foodType}</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-1 rounded-md bg-muted text-foreground capitalize">{item.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="glass-card p-6 space-y-4">
+            <h2 className="text-xl font-bold">Incoming Claims</h2>
+            {incomingClaims.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No incoming claims.</p>
+            ) : (
+              <div className="space-y-3">
+                {incomingClaims.slice(0, 10).map((claim) => (
+                  <div key={claim._id} className="border border-border rounded-lg p-4 space-y-2">
+                    <p className="font-semibold">{claim.food?.title || "Food Item"}</p>
+                    <p className="text-sm text-muted-foreground">Receiver: {claim.receiver?.name || "Unknown"} ({claim.receiver?.phone || "No phone"})</p>
+                    <p className="text-xs text-muted-foreground capitalize">Status: {claim.status}</p>
+                    {claim.status === "pending" ? (
+                      <div className="flex gap-2">
+                        <button onClick={() => handleClaimStatusUpdate(claim._id, "accepted")} className="btn-primary">Accept</button>
+                        <button onClick={() => handleClaimStatusUpdate(claim._id, "rejected")} className="btn-outline">Reject</button>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <section className="glass-card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold">My Claims</h2>
+            <Link href="/all-foods" className="btn-primary">Browse Food</Link>
+          </div>
+
+          {myClaims.length === 0 ? (
+            <p className="text-muted-foreground text-sm">You have not claimed any items yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {myClaims.slice(0, 12).map((claim) => (
+                <div key={claim._id} className="border border-border rounded-lg p-4 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-foreground">{claim.food?.title || "Food Item"}</p>
+                    <p className="text-sm text-muted-foreground">Location: {claim.food?.location || "Unknown"}</p>
+                  </div>
+                  <span className="text-xs font-semibold px-2 py-1 rounded-md bg-muted text-foreground capitalize">{claim.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
