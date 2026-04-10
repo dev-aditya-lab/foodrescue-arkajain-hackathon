@@ -5,11 +5,6 @@ import { JWT_SECRET } from '../config/env.config.js';
 
 
 
-function sanitizeUser(userDoc) {
-    const user = userDoc.toObject();
-    delete user.password;
-    return user;
-}
 
 export async function registerUser(req, res){
     //  * @data : { name, phone, email, password, role, providerType (if provider), location, organizationName (if NGO) }
@@ -51,7 +46,7 @@ export async function registerUser(req, res){
         }catch(err){
             console.error('Error generating token:', err);
         }
-        res.status(201).json({ message: 'User registered successfully', user: sanitizeUser(newUser) });
+        res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ message: 'Server error' });
@@ -76,13 +71,26 @@ export async function loginUser(req,res){
         // Generate JWT token
         try{
             const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-            res.cookie('token', token, cookieOptions);
+            res.cookie('token', token);
         }catch(err){
             console.error('Error generating token:', err);
         }
-        res.status(200).json({ message: 'Login successful', user: sanitizeUser(user) });
+        res.status(200).json({ message: 'Login successful', user });
     } catch (error) {
         console.error('Error logging in user:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+}
+
+export async function getMe(req, res){
+    try {
+        const user = await userModel.findById(req.user);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ user});
+    } catch (error) {
+        console.error('Error fetching user details(get-me controller):', error);
         res.status(500).json({ message: 'Server error' });
     }
 }

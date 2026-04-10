@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from "../config/env.config.js";
 
 export async function identifyUser(req, res, next) {

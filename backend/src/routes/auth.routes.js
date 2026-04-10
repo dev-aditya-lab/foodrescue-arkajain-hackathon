@@ -1,6 +1,7 @@
 import express from 'express';
 const AuthRouter = express.Router();
-import { registerUser, loginUser, logoutUser } from '../controllers/auth.controller.js';
+import { registerUser, loginUser, logoutUser, getMe } from '../controllers/auth.controller.js';
+import { identifyUser } from '../middleware/auth.middleware.js';
 
 /**
  * @API /api/auth/regsiter 
@@ -17,6 +18,13 @@ AuthRouter.post('/register', registerUser);
  * @data : { email, password }
  */
 AuthRouter.post('/login', loginUser);
+
+/**
+ * @API /api/auth/get-me
+ * @desc Get current logged in user details
+ * @access Private (requires JWT token)
+ */
+AuthRouter.get('/get-me', identifyUser,getMe )
 
 /**
  * @API /api/auth/logout
