@@ -2,7 +2,7 @@ import express from 'express';
 const app = express();
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { FRONTEND_URL } from './config/env.config.js';
+import { FRONTEND_ORIGINS, FRONTEND_URL } from './config/env.config.js';
 import AuthRouter from './routes/auth.routes.js';
 import foodRouter from './routes/food.routes.js';
 import claimRouter from './routes/claim.routes.js';
@@ -10,9 +10,28 @@ import routeRouter from './routes/route.routes.js';
 import statsRouter from './routes/stats.routes.js';
 import notificationRouter from './routes/notification.routes.js';
 
+const normalizeOrigin = (value) =>
+    String(value || "")
+        .trim()
+        .replace(/\/+$/, "");
+
+const allowedOrigins = new Set(FRONTEND_ORIGINS.map(normalizeOrigin));
 
 app.use(cors({
-  origin: FRONTEND_URL,
+    origin(origin, callback) {
+        if (!origin) {
+            callback(null, true);
+            return;
+        }
+
+        const normalizedOrigin = normalizeOrigin(origin);
+        if (allowedOrigins.has(normalizedOrigin)) {
+            callback(null, true);
+            return;
+        }
+
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
   credentials: true,
 }));
 app.use(cookieParser());

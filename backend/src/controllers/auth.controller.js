@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import userModel from '../model/user.model.js';
 import { JWT_SECRET } from '../config/env.config.js';
@@ -17,8 +17,10 @@ const authCookieOptions = {
 export async function registerUser(req, res){
     //  * @data : { name, phone, email, password, role, providerType (if provider), latitude, longitude, location(optional), organizationName }
     const { name, phone, email, password, role, providerType, latitude, longitude, location, organizationName } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedPhone = String(phone || "").trim();
     // Validate required fields
-    if (!name || !phone || !email || !password || !role || latitude === undefined || longitude === undefined) {
+    if (!name || !normalizedPhone || !normalizedEmail || !password || !role || latitude === undefined || longitude === undefined) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
     // Validate role    
@@ -38,13 +40,13 @@ export async function registerUser(req, res){
     try {
         // Check if user already exists
         const existingUser = await userModel.findOne({
-            $or: [{ email }, { phone }]
+            $or: [{ email: normalizedEmail }, { phone: normalizedPhone }]
         });
         if (existingUser) {
-            if (existingUser.email === email) {
+            if (existingUser.email === normalizedEmail) {
                 return res.status(409).json({ message: 'Email already registered' });
             }
-            if (existingUser.phone === phone) {
+            if (existingUser.phone === normalizedPhone) {
                 return res.status(409).json({ message: 'Phone already registered' });
             }
             return res.status(409).json({ message: 'User already exists' });
@@ -54,8 +56,8 @@ export async function registerUser(req, res){
         // Create new user
         const newUser = new userModel({
             name,
-            phone,
-            email,
+            phone: normalizedPhone,
+            email: normalizedEmail,
             password: hashedPassword,
             role,
             providerType,
@@ -98,18 +100,19 @@ export async function registerUser(req, res){
 export async function loginUser(req,res){
     //  * @data : { email, password }
     const { email, password } = req.body;
-    if (!email || !password) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    if (!normalizedEmail || !password) {
         return res.status(400).json({ message: 'Missing email or password' });
     }
     try {
-        const user = await userModel.findOne({ email }).select('+password');
+        const user = await userModel.findOne({ email: normalizedEmail }).select('+password');
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
         if (!user.password) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
