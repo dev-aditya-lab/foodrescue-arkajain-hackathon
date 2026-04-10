@@ -44,26 +44,20 @@ async function verifyUserFromBackend(request) {
 }
 
 export async function proxy(request) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname } = request.nextUrl;
   const isPublicPage = PUBLIC_PAGES.has(pathname);
-  const { isAuthenticated, role } = await verifyUserFromBackend(request);
 
-  if (!isPublicPage && !isAuthenticated) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", `${pathname}${search}`);
-    return NextResponse.redirect(loginUrl);
+  // In production, frontend and backend are on different domains, so backend auth
+  // cookies are not visible on frontend requests. Do not enforce private-route
+  // redirects from proxy; pages handle auth on the client with getMe().
+  if (!isPublicPage) {
+    return NextResponse.next();
   }
+
+  const { isAuthenticated } = await verifyUserFromBackend(request);
 
   if (isPublicPage && isAuthenticated) {
     return NextResponse.redirect(new URL("/all-foods", request.url));
-  }
-
-  if (isAuthenticated && matchesPrefix(pathname, PROVIDER_ONLY_PREFIXES) && role !== "provider") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  if (isAuthenticated && matchesPrefix(pathname, RECEIVER_ONLY_PREFIXES) && role !== "receiver") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
