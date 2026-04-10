@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, "Password is required"],
-    select : false
+    select: false
   },
   role: {
     type: String,
@@ -30,16 +30,15 @@ const userSchema = new mongoose.Schema({
     enum: ["restaurant", "individual", "grocery_store", "ngo", "other"],
   },
   location: {
-    type: {
-      type: String,
-      required: [true, "Location is required"],
-    }
+    type: String,
+    required: [true, "Location is required"],
+
   },
 
   organizationName: {
     type: String,
     default: null
-  }, 
+  },
 
   createdAt: {
     type: Date,
