@@ -62,14 +62,14 @@ export default function AddFoodPage() {
 
       // Redirect after short delay
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/all-foods");
       }, 2000);
     } catch (error) {
       // If backend is not available, show success anyway for demo
       console.warn("Backend not available, showing demo success.", error);
       setIsSuccess(true);
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/all-foods");
       }, 2000);
     } finally {
       setIsSubmitting(false);
@@ -88,7 +88,7 @@ export default function AddFoodPage() {
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Your surplus food has been listed. People nearby will be able to find
-            and claim it. Redirecting to dashboard...
+            and claim it. Redirecting to all-foods...
           </p>
         </div>
       </div>

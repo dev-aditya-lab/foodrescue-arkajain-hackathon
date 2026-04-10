@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { login, getMe } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,8 @@ export default function LoginPage() {
         localStorage.setItem("authUser", JSON.stringify(user));
       }
 
-      router.push("/dashboard");
+      const nextPath = searchParams.get("next");
+      router.push(nextPath || "/all-foods");
       router.refresh();
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");

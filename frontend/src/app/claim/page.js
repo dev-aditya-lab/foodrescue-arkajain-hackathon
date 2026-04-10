@@ -5,11 +5,11 @@ export default function ClaimPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 animate-fade-in">
       <Link
-        href="/dashboard"
+        href="/all-foods"
         className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-8 text-sm font-medium transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Dashboard
+        Back to all-foods
       </Link>
 
       <div className="glass-card p-8 sm:p-12 text-center space-y-8">
@@ -91,7 +91,7 @@ export default function ClaimPage() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-          <Link href="/dashboard" className="btn-primary">
+          <Link href="/all-foods" className="btn-primary">
             Continue Browsing
           </Link>
           <Link href="/" className="btn-outline">

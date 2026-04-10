@@ -31,7 +31,7 @@ export default function CartPage() {
               claim them!
             </p>
           </div>
-          <Link href="/dashboard" className="btn-primary inline-flex">
+          <Link href="/all-foods" className="btn-primary inline-flex">
             Browse Food Items
             <ArrowRight className="w-5 h-5" />
           </Link>
@@ -138,7 +138,7 @@ export default function CartPage() {
                   Complete Pickups
                 </Link>
                 <Link
-                  href="/dashboard"
+                  href="/all-foods"
                   className="btn-outline w-full text-center block"
                 >
                   Continue Shopping

@@ -58,7 +58,7 @@ export default function RegisterPage() {
         localStorage.setItem("authUser", JSON.stringify(user));
       }
 
-      router.push("/dashboard");
+      router.push("/all-foods");
       router.refresh();
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");

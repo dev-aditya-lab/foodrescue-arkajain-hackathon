@@ -87,7 +87,7 @@ export default function HomePage() {
                   Add Surplus Food
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link href="/dashboard" className="btn-outline text-base">
+                <Link href="/all-foods" className="btn-outline text-base">
                   Find Food Nearby
                 </Link>
               </div>
@@ -151,7 +151,7 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-12">
-            <Link href="/dashboard" className="btn-secondary text-base">
+            <Link href="/all-foods" className="btn-secondary text-base">
               View All Items
               <ArrowRight className="w-5 h-5" />
             </Link>
@@ -269,7 +269,7 @@ export default function HomePage() {
                 <Link href="/add-food" className="btn-primary text-base">
                   Share Food Now
                 </Link>
-                <Link href="/dashboard" className="btn-secondary text-base">
+                <Link href="/all-foods" className="btn-secondary text-base">
                   Browse Available Food
                 </Link>
               </div>

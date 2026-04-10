@@ -5,11 +5,11 @@ export default function MapPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
       <Link
-        href="/dashboard"
+        href="/all-foods"
         className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-6 text-sm font-medium transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Dashboard
+        Back to all-foods
       </Link>
 
       <div className="glass-card overflow-hidden">
@@ -74,8 +74,8 @@ export default function MapPage() {
             ))}
           </div>
 
-          <Link href="/dashboard" className="btn-primary inline-flex">
-            Back to Dashboard
+          <Link href="/all-foods" className="btn-primary inline-flex">
+            Back to all-foods
           </Link>
         </div>
       </div>

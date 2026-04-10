@@ -38,7 +38,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/dashboard"
+                  href="/all-foods"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Browse Food
