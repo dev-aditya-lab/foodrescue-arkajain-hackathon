@@ -1,4 +1,26 @@
 import foodModel from "../model/food.model.js";
+import cloudinary from "../config/cloudinary.js";
+import { CLOUDINARY_FOLDER } from "../config/env.config.js";
+
+function uploadFoodImage(fileBuffer) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: CLOUDINARY_FOLDER,
+                resource_type: "image",
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(result);
+            }
+        );
+
+        uploadStream.end(fileBuffer);
+    });
+}
 
 export async function getMyFoodItems(req, res) {
     if (req.user.role !== 'provider') {
@@ -41,6 +63,12 @@ export async function addFoodItem(req, res){
         const safeQuantity = Number(quantity);
         const priorityScore = safeQuantity > 0 ? timeToExpiry / safeQuantity : 0;
 
+        let imageUrl = null;
+        if (req.file?.buffer) {
+            const uploadedImage = await uploadFoodImage(req.file.buffer);
+            imageUrl = uploadedImage?.secure_url || null;
+        }
+
         const newFoodItem = new foodModel({
             title,
             description,
@@ -48,6 +76,7 @@ export async function addFoodItem(req, res){
             foodType,
             provider: providerID,
             location: ProviderLocation,
+            imageUrl,
             expiryDate,
             status: 'available',
             priorityScore,

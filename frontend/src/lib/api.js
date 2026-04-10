@@ -16,11 +16,12 @@ const API_BASE_URL =
  */
 async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
+  const isFormData = options.body instanceof FormData;
   const config = {
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(options.headers || {}),
     },
     ...options,
   };
@@ -74,6 +75,13 @@ export async function getFoodItemById(id) {
  * @param {Object} data - { name, quantity, expiryTime, location, foodType, description, ... }
  */
 export async function createFoodItem(data) {
+  if (data instanceof FormData) {
+    return apiFetch("/food/add-food", {
+      method: "POST",
+      body: data,
+    });
+  }
+
   return apiFetch("/food/add-food", {
     method: "POST",
     body: JSON.stringify(data),

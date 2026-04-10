@@ -26,6 +26,7 @@ export default function AddFoodPage() {
     foodType: "",
     expiryDate: "",
   });
+  const [imageFile, setImageFile] = useState(null);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -37,13 +38,17 @@ export default function AddFoodPage() {
     setIsSubmitting(true);
 
     try {
-      await createFoodItem({
-        title: form.title,
-        description: form.description,
-        quantity: Number(form.quantity),
-        foodType: form.foodType,
-        expiryDate: form.expiryDate,
-      });
+      const payload = new FormData();
+      payload.append("title", form.title);
+      payload.append("description", form.description);
+      payload.append("quantity", String(Number(form.quantity)));
+      payload.append("foodType", form.foodType);
+      payload.append("expiryDate", form.expiryDate);
+      if (imageFile) {
+        payload.append("image", imageFile);
+      }
+
+      await createFoodItem(payload);
 
       setIsSuccess(true);
 
@@ -85,7 +90,7 @@ export default function AddFoodPage() {
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Your surplus food has been listed. People nearby will be able to find
-            and claim it. Redirecting to all-foods...
+            and claim it. Redirecting to dashboard...
           </p>
         </div>
       </div>
@@ -144,6 +149,21 @@ export default function AddFoodPage() {
               onChange={handleChange}
               className="form-input resize-none"
             />
+          </div>
+
+          <div>
+            <label htmlFor="image" className="form-label">Food Image (one image)</label>
+            <input
+              id="image"
+              name="image"
+              type="file"
+              accept="image/*"
+              onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+              className="form-input"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Optional, max 5MB. Supported types: JPG, PNG, WEBP, etc.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

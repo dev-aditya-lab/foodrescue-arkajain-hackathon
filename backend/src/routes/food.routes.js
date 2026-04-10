@@ -1,5 +1,6 @@
 import express from 'express';
 import { identifyUser } from '../middleware/auth.middleware.js';
+import upload from '../middleware/upload.middleware.js';
 import {
 	addFoodItem,
 	getMyFoodItems,
@@ -15,7 +16,7 @@ const foodRouter = express.Router();
  * @access Private (provider only)
  * @body { title, description, quantity, foodType, expiryDate }
  */
-foodRouter.post('/add-food', identifyUser,addFoodItem)
+foodRouter.post('/add-food', identifyUser, upload.single('image'), addFoodItem)
 
 /**
  * @route GET /api/food/my-food

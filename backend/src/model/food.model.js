@@ -27,6 +27,11 @@ const foodSchema = new mongoose.Schema({
         default: null
     },
 
+    imageUrl: {
+        type: String,
+        default: null
+    },
+
     expiryDate: {
         type: Date,
         required: [true, "Expiry date is required"]
