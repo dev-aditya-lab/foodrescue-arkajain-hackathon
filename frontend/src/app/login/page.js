@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, getMe } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
@@ -107,5 +107,25 @@ export default function LoginPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <section className="relative overflow-hidden py-12 sm:py-16">
+      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="glass-card p-6 sm:p-8 text-center text-muted-foreground">
+          Loading login...
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }

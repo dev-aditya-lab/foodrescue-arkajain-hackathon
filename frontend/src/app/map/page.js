@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -12,7 +13,7 @@ const PickupMapClient = dynamic(() => import("@/components/PickupMapClient"), {
   ),
 });
 
-export default function MapPage() {
+function MapContent() {
   const searchParams = useSearchParams();
   const initialFoodId = searchParams.get("foodId");
 
@@ -40,5 +41,21 @@ export default function MapPage() {
         <PickupMapClient initialFoodId={initialFoodId} />
       </div>
     </div>
+  );
+}
+
+function MapFallback() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="glass-card p-8 text-center text-muted-foreground">Loading map page...</div>
+    </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={<MapFallback />}>
+      <MapContent />
+    </Suspense>
   );
 }
