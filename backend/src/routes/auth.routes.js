@@ -12,7 +12,9 @@ AuthRouter.post('/register', registerUser);
 
 /**
  * @API /api/auth/login
- * @de
+ * @desc Login user and set JWT token in cookie
+ * @access Public
+ * @data : { email, password }
  */
 AuthRouter.post('/login', loginUser);
 AuthRouter.post('/logout', logoutUser);

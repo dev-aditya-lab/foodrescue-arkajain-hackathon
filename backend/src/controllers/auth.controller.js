@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userModel from '../model/user.model';
+import { JWT_SECRET } from '../config/env.config';
 
 export async function registerUser(req, res){
     //  * @data : { name, phone, email, password, role, providerType (if provider), location, organizationName (if NGO) }
@@ -34,7 +35,15 @@ export async function registerUser(req, res){
             organizationName: role === 'provider' && providerType === 'ngo' ? organizationName : undefined
         });
         await newUser.save();
-        res.status(201).json({ message: 'User registered successfully' });
+        
+        // Generate JWT token
+        try{
+            const token = jwt.sign({ userId: newUser._id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
+            res.cookie('token', token);
+        }catch(err){
+            console.error('Error generating token:', err);
+        }
+        res.status(201).json({ message: 'User registered successfully', user: newUser });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ message: 'Server error' });
