@@ -11,7 +11,10 @@ const foodSchema = new mongoose.Schema({
         required: [true, "Description is required"]
     },
 
-    quantity: Number, // in meals
+    quantity: {
+        type: String,
+        required: [true, "Quantity is required"]
+    },
     foodType: {
         type: String,
         enum: ["veg", "non-veg", "mixed"]

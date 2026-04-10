@@ -60,8 +60,8 @@ export async function addFoodItem(req, res){
         }
 
         const timeToExpiry = (expiry - now) / (1000 * 60 * 60); // in hours
-        const safeQuantity = Number(quantity);
-        const priorityScore = safeQuantity > 0 ? timeToExpiry / safeQuantity : 0;
+        //todo: intigarte AI to calculate better priority score based on food type, local demand, etc.
+        const priorityScore = 20;
 
         let imageUrl = null;
         if (req.file?.buffer) {
@@ -72,12 +72,12 @@ export async function addFoodItem(req, res){
         const newFoodItem = new foodModel({
             title,
             description,
-            quantity: safeQuantity,
+            quantity,
             foodType,
             provider: providerID,
             location: ProviderLocation,
             imageUrl,
-            expiryDate,
+            expiryDate : timeToExpiry,
             status: 'available',
             priorityScore,
             organizationName: req.user.organizationName || null
