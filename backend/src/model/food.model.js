@@ -35,7 +35,15 @@ const foodSchema = new mongoose.Schema({
         default: "available"
     },
 
-    priorityScore: Number, 
+    priorityScore: {
+        type: Number,
+        default: 0
+    }, 
+    orgnizationName: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
 
     createdAt: {
         type: Date,

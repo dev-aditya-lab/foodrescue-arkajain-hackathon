@@ -1,9 +1,10 @@
 import express from 'express';
+const app = express();
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { FRONTEND_URL } from './config/env.config.js';
 import AuthRouter from './routes/auth.routes.js';
-const app = express();
+import foodRouter from './routes/food.routes.js';
 
 
 app.use(cors({
@@ -17,6 +18,9 @@ app.use(express.json());
 
 // Auth Routes
 app.use('/api/auth', AuthRouter);
+
+//food routes
+app.use('/api/food',foodRouter)
 
 app.get('/api/health', (req, res) => {
   // send a simple html with good css styling response to indicate the API is running

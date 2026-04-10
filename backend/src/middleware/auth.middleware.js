@@ -8,8 +8,7 @@ export async function identifyUser(req, res, next) {
     }
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded.userId
-        req.role = decoded.role
+        req.user = { _id: decoded.userId, role: decoded.role, location: decoded.location, organizationName: decoded?.organizationName };
         next();
     } catch (error) {
         console.error('Error verifying token:', error);
