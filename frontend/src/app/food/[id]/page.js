@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Check,
   User,
+  ExternalLink,
 } from "lucide-react";
 import CountdownTimer from "@/components/CountdownTimer";
 import { useCart } from "@/context/CartContext";
@@ -93,6 +94,15 @@ export default function FoodDetailPage({ params }) {
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
+
+  const hasProviderCoordinates =
+    Number.isFinite(Number(item.providerLatitude)) &&
+    Number.isFinite(Number(item.providerLongitude));
+  const googleMapsUrl = hasProviderCoordinates
+    ? `https://www.google.com/maps/search/?api=1&query=${Number(item.providerLatitude)},${Number(item.providerLongitude)}`
+    : null;
+  const providerPhone = String(item.providerPhone || "").trim();
+  const providerEmail = String(item.providerEmail || "").trim();
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
@@ -183,13 +193,31 @@ export default function FoodDetailPage({ params }) {
                 <div className="w-9 h-9 rounded-lg bg-secondary/15 flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin className="w-4 h-4 text-secondary" />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <p className="text-sm font-medium text-foreground">
-                    {item.location}
+                    {/* {googleMapsUrl ? googleMapsUrl : "Contact provider for location"} */}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Pickup location
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      Pickup location
+                    </p>
+                    {googleMapsUrl ? (
+                      <a
+                        href={googleMapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80"
+                      >
+                        Open in Google Maps
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : null}
+                  </div>
+                  {hasProviderCoordinates ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      {Number(item.providerLatitude).toFixed(5)}, {Number(item.providerLongitude).toFixed(5)}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -231,11 +259,27 @@ export default function FoodDetailPage({ params }) {
                 <p className="font-semibold text-foreground">{item.provider}</p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="w-3.5 h-3.5" />
-                  <span>{item.providerPhone}</span>
+                  <span>
+                    {providerPhone ? (
+                      <a href={`tel:${providerPhone}`} className="hover:text-primary transition-colors">
+                        {providerPhone}
+                      </a>
+                    ) : (
+                      "Not provided"
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="w-3.5 h-3.5" />
-                  <span className="truncate">{item.providerEmail}</span>
+                  <span className="truncate">
+                    {providerEmail ? (
+                      <a href={`mailto:${providerEmail}`} className="hover:text-primary transition-colors">
+                        {providerEmail}
+                      </a>
+                    ) : (
+                      "Not provided"
+                    )}
+                  </span>
                 </div>
               </div>
             </div>

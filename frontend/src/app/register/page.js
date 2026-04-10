@@ -26,7 +26,6 @@ export default function RegisterPage() {
     providerType: "restaurant",
     latitude: "",
     longitude: "",
-    location: "",
     organizationName: "",
   });
   const [error, setError] = useState("");
@@ -51,7 +50,6 @@ export default function RegisterPage() {
       organizationName: formData.organizationName || undefined,
       latitude: Number(formData.latitude),
       longitude: Number(formData.longitude),
-      location: formData.location || undefined,
     };
 
     try {
@@ -186,11 +184,9 @@ export default function RegisterPage() {
                   placeholder="Longitude"
                 />
               </div>
-
-              <div>
-                <label htmlFor="location" className="form-label">Optional Address / Map URL</label>
-                <input id="location" name="location" value={formData.location} onChange={handleChange} className="form-input" placeholder="Optional human-readable location" />
-              </div>
+              <p className="text-xs text-muted-foreground">
+                We use your saved coordinates to generate navigation links automatically.
+              </p>
             </div>
 
             {error ? (
