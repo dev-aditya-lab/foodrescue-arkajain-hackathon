@@ -11,26 +11,33 @@ export async function addFoodItem(req, res){
     const providerID = req.user._id;
     const ProviderLocation = req.user.location;
     try {
-        const { title, description, quantity, foodType, provider, location, expiryDate } = req.body;
+        const { title, description, quantity, foodType, expiryDate } = req.body;
         if (!title || !description || !quantity || !foodType || !expiryDate) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
         // calculate priority score based on expiry date and quantity (example logic, can be improved)
         const now = new Date();
         const expiry = new Date(expiryDate);
+
+        if (Number.isNaN(expiry.getTime())) {
+            return res.status(400).json({ message: 'Invalid expiryDate' });
+        }
+
         const timeToExpiry = (expiry - now) / (1000 * 60 * 60); // in hours
-        let priorityScore = 0;
+        const safeQuantity = Number(quantity);
+        const priorityScore = safeQuantity > 0 ? timeToExpiry / safeQuantity : 0;
+
         const newFoodItem = new foodModel({
             title,
             description,
-            quantity,
+            quantity: safeQuantity,
             foodType,
             provider: providerID,
             location: ProviderLocation,
             expiryDate,
             status: 'available',
-            priorityScore: timeToExpiry / quantity, // simple logic: more time and less quantity = higher score
-            orgnizationName: req.user.organizationName || null
+            priorityScore,
+            organizationName: req.user.organizationName || null
         });
         await newFoodItem.save();
         res.status(201).json({ message: 'Food item added successfully', foodItem: newFoodItem });
@@ -39,3 +46,4 @@ export async function addFoodItem(req, res){
         res.status(500).json({ message: 'Server error' });
     }
 }
+

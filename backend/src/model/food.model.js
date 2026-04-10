@@ -23,11 +23,14 @@ const foodSchema = new mongoose.Schema({
     },
 
     location: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String,
+        default: null
     },
 
-    expiryTime: Date,
+    expiryDate: {
+        type: Date,
+        required: [true, "Expiry date is required"]
+    },
 
     status: {
         type: String,
@@ -39,9 +42,8 @@ const foodSchema = new mongoose.Schema({
         type: Number,
         default: 0
     }, 
-    orgnizationName: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+    organizationName: {
+        type: String,
         default: null
     },
 
