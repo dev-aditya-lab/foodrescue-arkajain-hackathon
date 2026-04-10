@@ -49,3 +49,32 @@ export async function registerUser(req, res){
         res.status(500).json({ message: 'Server error' });
     }
 }
+
+export async function registerUser(req,res){
+    //  * @data : { email, password }
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Missing email or password' });
+    }
+    try {
+        const user = await userModel.findOne({ email }).select('+password');
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+        // Generate JWT token
+        try{
+            const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+            res.cookie('token', token);
+        }catch(err){
+            console.error('Error generating token:', err);
+        }
+        res.status(200).json({ message: 'Login successful', user });
+    } catch (error) {
+        console.error('Error logging in user:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+}
