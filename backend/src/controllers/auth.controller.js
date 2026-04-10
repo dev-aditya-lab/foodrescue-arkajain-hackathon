@@ -50,7 +50,7 @@ export async function registerUser(req, res){
     }
 }
 
-export async function registerUser(req,res){
+export async function loginUser(req,res){
     //  * @data : { email, password }
     const { email, password } = req.body;
     if (!email || !password) {
@@ -77,4 +77,9 @@ export async function registerUser(req,res){
         console.error('Error logging in user:', error);
         res.status(500).json({ message: 'Server error' });
     }
+}
+
+export async function logoutUser(req, res){
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logout successful' });
 }
