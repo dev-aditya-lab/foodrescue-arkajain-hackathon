@@ -13,6 +13,12 @@ const FOOD_TYPES = [
   { label: "Mixed", value: "mixed" },
 ];
 
+const OFFER_TYPES = [
+  { label: "Donation", value: "donation" },
+  { label: "Community Redistribution", value: "community-redistribution" },
+  { label: "Discounted Sale", value: "discounted-sale" },
+];
+
 export default function AddFoodPage() {
   const router = useRouter();
   const { role, isLoading } = useAuth();
@@ -27,6 +33,8 @@ export default function AddFoodPage() {
     description: "",
     quantity: "",
     foodType: "",
+    offerType: "donation",
+    discountedPrice: "",
     expiryDate: "",
     estimatedMeals: "",
     estimatedWeightKg: "",
@@ -51,6 +59,10 @@ export default function AddFoodPage() {
       payload.append("description", form.description);
       payload.append("quantity", form.quantity);
       payload.append("foodType", form.foodType);
+      payload.append("offerType", form.offerType);
+      if (form.offerType === "discounted-sale") {
+        payload.append("discountedPrice", form.discountedPrice);
+      }
       payload.append("expiryDate", form.expiryDate);
       payload.append("estimatedMeals", form.estimatedMeals);
       payload.append("estimatedWeightKg", form.estimatedWeightKg);
@@ -328,33 +340,79 @@ export default function AddFoodPage() {
             </div>
 
             <div>
-              <label htmlFor="estimatedMeals" className="form-label">Estimated Meals (manual)</label>
+              <label htmlFor="offerType" className="form-label">Offer Mode *</label>
+              <select
+                id="offerType"
+                name="offerType"
+                required
+                value={form.offerType}
+                onChange={handleChange}
+                className="form-select"
+              >
+                {OFFER_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {form.offerType === "discounted-sale" ? (
+              <div>
+                <label htmlFor="discountedPrice" className="form-label">Discounted Price *</label>
+                <input
+                  id="discountedPrice"
+                  name="discountedPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  placeholder="e.g., 49"
+                  value={form.discountedPrice}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </div>
+            ) : null}
+
+            <div>
+              <label htmlFor="estimatedMeals" className="form-label">
+                Estimated Meals Served (manual)
+              </label>
               <input
                 id="estimatedMeals"
                 name="estimatedMeals"
                 type="number"
                 min="0"
                 step="1"
-                placeholder="e.g., 20"
+                placeholder="Example: 20 meals"
                 value={form.estimatedMeals}
                 onChange={handleChange}
                 className="form-input"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Approximate number of people this listing can feed.
+              </p>
             </div>
 
             <div>
-              <label htmlFor="estimatedWeightKg" className="form-label">Estimated Weight in KG (manual)</label>
+              <label htmlFor="estimatedWeightKg" className="form-label">
+                Estimated Total Weight (kg, manual)
+              </label>
               <input
                 id="estimatedWeightKg"
                 name="estimatedWeightKg"
                 type="number"
                 min="0"
                 step="0.1"
-                placeholder="e.g., 5.0"
+                placeholder="Example: 5.5 kg"
                 value={form.estimatedWeightKg}
                 onChange={handleChange}
                 className="form-input"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Approximate combined weight of all food in this listing.
+              </p>
             </div>
           </div>
         </div>

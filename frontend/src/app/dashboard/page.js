@@ -26,6 +26,8 @@ export default function DashboardPage() {
     description: "",
     quantity: "",
     foodType: "",
+    offerType: "donation",
+    discountedPrice: "",
     expiryDate: "",
   });
 
@@ -101,6 +103,11 @@ export default function DashboardPage() {
       description: item.description || "",
       quantity: item.quantity || "",
       foodType: item.foodType || "",
+      offerType: item.offerType || "donation",
+      discountedPrice:
+        item.discountedPrice === null || item.discountedPrice === undefined
+          ? ""
+          : String(item.discountedPrice),
       expiryDate: item.expiryDate
         ? new Date(item.expiryDate).toISOString().slice(0, 16)
         : "",
@@ -109,7 +116,15 @@ export default function DashboardPage() {
 
   const cancelEdit = () => {
     setEditingItemId(null);
-    setEditForm({ title: "", description: "", quantity: "", foodType: "", expiryDate: "" });
+    setEditForm({
+      title: "",
+      description: "",
+      quantity: "",
+      foodType: "",
+      offerType: "donation",
+      discountedPrice: "",
+      expiryDate: "",
+    });
   };
 
   const handleSaveEdit = async (itemId) => {
@@ -119,6 +134,11 @@ export default function DashboardPage() {
         description: editForm.description,
         quantity: editForm.quantity,
         foodType: editForm.foodType,
+        offerType: editForm.offerType,
+        discountedPrice:
+          editForm.offerType === "discounted-sale"
+            ? editForm.discountedPrice
+            : null,
         expiryDate: editForm.expiryDate || undefined,
       };
 
@@ -257,6 +277,29 @@ export default function DashboardPage() {
                             className="form-input"
                           />
                         </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <select
+                            value={editForm.offerType}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, offerType: e.target.value }))}
+                            className="form-select"
+                          >
+                            <option value="donation">Donation</option>
+                            <option value="community-redistribution">Community Redistribution</option>
+                            <option value="discounted-sale">Discounted Sale</option>
+                          </select>
+
+                          {editForm.offerType === "discounted-sale" ? (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={editForm.discountedPrice}
+                              onChange={(e) => setEditForm((prev) => ({ ...prev, discountedPrice: e.target.value }))}
+                              className="form-input"
+                              placeholder="Discounted price"
+                            />
+                          ) : null}
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           <button onClick={() => handleSaveEdit(item._id)} className="btn-primary" type="button">Save</button>
                           <button onClick={cancelEdit} className="btn-outline" type="button">Cancel</button>
@@ -266,7 +309,15 @@ export default function DashboardPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-semibold text-foreground">{item.title}</p>
-                          <p className="text-sm text-muted-foreground">Qty: {item.quantity} • Type: {item.foodType}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Qty: {item.quantity} • Type: {item.foodType}
+                          </p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            Offer: {String(item.offerType || "donation").replace(/-/g, " ")}
+                            {item.offerType === "discounted-sale" && Number.isFinite(Number(item.discountedPrice))
+                              ? ` (₹${Number(item.discountedPrice).toFixed(2)})`
+                              : ""}
+                          </p>
                         </div>
                         <span className="text-xs font-semibold px-2 py-1 rounded-md bg-muted text-foreground capitalize">{item.status}</span>
                       </div>

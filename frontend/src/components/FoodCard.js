@@ -19,6 +19,8 @@ export default function FoodCard({
   providerEmail,
   pickupTime,
   foodType,
+  offerType,
+  discountedPrice,
   status,
 }) {
   const isUrgent = expiryTime < 60;
@@ -44,6 +46,8 @@ export default function FoodCard({
       image,
       pickupTime,
       foodType,
+      offerType,
+      discountedPrice,
       status,
     });
     setIsAdded(true);
@@ -102,6 +106,12 @@ export default function FoodCard({
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
               Qty: <span className="font-medium text-foreground">{quantity}</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Offer: <span className="font-semibold text-foreground capitalize">{String(offerType || "donation").replace(/-/g, " ")}</span>
+              {offerType === "discounted-sale" && Number.isFinite(Number(discountedPrice))
+                ? ` (₹${Number(discountedPrice).toFixed(2)})`
+                : ""}
             </p>
           </div>
 

@@ -164,6 +164,17 @@ export default function FoodDetailPage({ params }) {
                   {Number.isFinite(item.distance) ? `${item.distance} km` : "N/A"}
                 </p>
               </div>
+              <div className="bg-muted/50 rounded-xl p-4 space-y-1">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                  Offer Type
+                </p>
+                <p className="text-sm font-bold text-foreground capitalize">
+                  {String(item.offerType || "donation").replace(/-/g, " ")}
+                  {item.offerType === "discounted-sale" && Number.isFinite(Number(item.discountedPrice))
+                    ? ` (₹${Number(item.discountedPrice).toFixed(2)})`
+                    : ""}
+                </p>
+              </div>
             </div>
 
             {/* Location & Time */}

@@ -239,9 +239,23 @@ export async function addFoodItem(req, res){
     const providerID = req.user._id;
     const ProviderLocation = req.user.location || `${req.user.latitude},${req.user.longitude}`;
     try {
-        const { title, description, quantity, foodType, expiryDate, estimatedMeals, estimatedWeightKg } = req.body;
-        if (!title || !description || !quantity || !foodType || !expiryDate) {
+        const {
+            title,
+            description,
+            quantity,
+            foodType,
+            expiryDate,
+            offerType = "donation",
+            discountedPrice,
+            estimatedMeals,
+            estimatedWeightKg,
+        } = req.body;
+        if (!title || !description || !quantity || !foodType || !expiryDate || !offerType) {
             return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        if (!["discounted-sale", "donation", "community-redistribution"].includes(offerType)) {
+            return res.status(400).json({ message: 'Invalid offerType' });
         }
         const expiry = new Date(expiryDate);
 
@@ -257,6 +271,10 @@ export async function addFoodItem(req, res){
             estimatedWeightKg === undefined || estimatedWeightKg === null || estimatedWeightKg === ""
                 ? null
                 : Number(estimatedWeightKg);
+        const parsedDiscountedPrice =
+            discountedPrice === undefined || discountedPrice === null || discountedPrice === ""
+                ? null
+                : Number(discountedPrice);
 
         if (parsedEstimatedMeals !== null && (!Number.isFinite(parsedEstimatedMeals) || parsedEstimatedMeals < 0)) {
             return res.status(400).json({ message: 'estimatedMeals must be a valid positive number' });
@@ -264,6 +282,12 @@ export async function addFoodItem(req, res){
 
         if (parsedEstimatedWeightKg !== null && (!Number.isFinite(parsedEstimatedWeightKg) || parsedEstimatedWeightKg < 0)) {
             return res.status(400).json({ message: 'estimatedWeightKg must be a valid positive number' });
+        }
+
+        if (offerType === "discounted-sale") {
+            if (parsedDiscountedPrice === null || !Number.isFinite(parsedDiscountedPrice) || parsedDiscountedPrice < 0) {
+                return res.status(400).json({ message: 'discountedPrice is required for discounted-sale and must be >= 0' });
+            }
         }
 
         const aiPriorityScore = await calculatePriorityScoreWithAI({
@@ -287,6 +311,8 @@ export async function addFoodItem(req, res){
             description,
             quantity,
             foodType,
+            offerType,
+            discountedPrice: offerType === "discounted-sale" ? parsedDiscountedPrice : null,
             provider: providerID,
             location: ProviderLocation,
             imageUrl,
@@ -343,7 +369,18 @@ export async function editFoodItem(req, res) {
 
     try {
         const { foodId } = req.params;
-        const { title, description, quantity, foodType, expiryDate, status, estimatedMeals, estimatedWeightKg } = req.body;
+        const {
+            title,
+            description,
+            quantity,
+            foodType,
+            expiryDate,
+            status,
+            offerType,
+            discountedPrice,
+            estimatedMeals,
+            estimatedWeightKg,
+        } = req.body;
 
         const existingFood = await foodModel.findById(foodId);
         if (!existingFood) {
@@ -373,6 +410,26 @@ export async function editFoodItem(req, res) {
         }
         if (foodType !== undefined) existingFood.foodType = foodType;
         if (status !== undefined) existingFood.status = status;
+        if (offerType !== undefined) {
+            if (!["discounted-sale", "donation", "community-redistribution"].includes(offerType)) {
+                return res.status(400).json({ message: 'Invalid offerType' });
+            }
+            existingFood.offerType = offerType;
+        }
+        if (discountedPrice !== undefined) {
+            const parsedPrice = discountedPrice === null || discountedPrice === "" ? null : Number(discountedPrice);
+            if (parsedPrice !== null && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+                return res.status(400).json({ message: 'discountedPrice must be a valid positive number' });
+            }
+            existingFood.discountedPrice = parsedPrice;
+        }
+        if (existingFood.offerType === "discounted-sale") {
+            if (!Number.isFinite(Number(existingFood.discountedPrice)) || Number(existingFood.discountedPrice) < 0) {
+                return res.status(400).json({ message: 'discountedPrice is required for discounted-sale and must be >= 0' });
+            }
+        } else {
+            existingFood.discountedPrice = null;
+        }
         if (estimatedMeals !== undefined) {
             const parsedMeals = estimatedMeals === null || estimatedMeals === "" ? null : Number(estimatedMeals);
             if (parsedMeals !== null && (!Number.isFinite(parsedMeals) || parsedMeals < 0)) {

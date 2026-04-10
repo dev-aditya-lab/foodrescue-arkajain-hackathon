@@ -23,6 +23,8 @@ export function mapFoodFromApi(item) {
     expiryTime: expiryMinutes,
     location: item.location || "Location not provided",
     foodType: item.foodType,
+    offerType: item.offerType || "donation",
+    discountedPrice: item.discountedPrice ?? null,
     provider: providerName,
     providerPhone: item.provider?.phone || "-",
     providerEmail: item.provider?.email || "-",

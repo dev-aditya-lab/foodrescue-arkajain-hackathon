@@ -20,6 +20,18 @@ const foodSchema = new mongoose.Schema({
         enum: ["veg", "non-veg", "mixed"]
     },
 
+    offerType: {
+        type: String,
+        enum: ["discounted-sale", "donation", "community-redistribution"],
+        default: "donation"
+    },
+
+    discountedPrice: {
+        type: Number,
+        min: [0, "Discounted price must be >= 0"],
+        default: null
+    },
+
     provider: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
