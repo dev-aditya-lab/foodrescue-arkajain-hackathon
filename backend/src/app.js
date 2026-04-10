@@ -3,6 +3,7 @@ const app = express();
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { FRONTEND_ORIGINS, FRONTEND_URL } from './config/env.config.js';
+import connectToDatabase from './config/database.js';
 import AuthRouter from './routes/auth.routes.js';
 import foodRouter from './routes/food.routes.js';
 import claimRouter from './routes/claim.routes.js';
@@ -36,6 +37,16 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
+
+app.use(async (req, res, next) => {
+    try {
+        await connectToDatabase();
+        next();
+    } catch (error) {
+        console.error('Database connection error:', error?.message || error);
+        res.status(503).json({ message: 'Database unavailable. Please try again shortly.' });
+    }
+});
 
 
 

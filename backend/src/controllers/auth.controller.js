@@ -80,6 +80,9 @@ export async function registerUser(req, res){
         res.status(201).json({ message: 'User registered successfully', user: safeUser });
     } catch (error) {
         console.error('Error registering user:', error);
+        if (error?.name === 'MongoServerSelectionError' || String(error?.message || '').includes('buffering timed out')) {
+            return res.status(503).json({ message: 'Database unavailable. Please try again shortly.' });
+        }
         if (error?.code === 11000) {
             const duplicateField = Object.keys(error.keyPattern || {})[0];
             if (duplicateField === 'email') {
@@ -126,6 +129,9 @@ export async function loginUser(req,res){
         res.status(200).json({ message: 'Login successful', user });
     } catch (error) {
         console.error('Error logging in user:', error);
+        if (error?.name === 'MongoServerSelectionError' || String(error?.message || '').includes('buffering timed out')) {
+            return res.status(503).json({ message: 'Database unavailable. Please try again shortly.' });
+        }
         res.status(500).json({ message: 'Server error' });
     }
 }
