@@ -106,18 +106,18 @@ export default function HomePage() {
     () => [
       {
         number: "01",
-        title: "List surplus food",
-        description: "Add quantity, expiry, and coordinates once. The system handles the rest.",
+        title: "Providers list food",
+        description: "Share surplus food instantly with quantity, expiry date, and exact location. No forms or back-and-forth.",
       },
       {
         number: "02",
-        title: "Match nearby demand",
-        description: "Receivers see a clean feed ordered by urgency, distance, and impact.",
+        title: "Smart matching",
+        description: "Receivers find nearby food sorted by urgency and distance. The algorithm surfaces what's most needed, most urgent, and closest.",
       },
       {
         number: "03",
-        title: "Claim and collect",
-        description: "One tap creates the claim, updates the route, and keeps both sides informed.",
+        title: "One-tap rescue",
+        description: "Claim food, get directions, and notify both sides instantly. From discovery to pickup in seconds.",
       },
     ],
     []
@@ -285,15 +285,15 @@ export default function HomePage() {
             <div className="glass-card p-6 sm:p-8 space-y-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Why this layout works</p>
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-                Less clutter, more action.
+                Fast rescue, zero friction.
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                The homepage now reads like a product landing page: the promise, the proof, and the next step all live in distinct zones.
+                Every part of the system is designed around speed: listing takes seconds, matching is instant, and claims happen with one tap. We removed the steps that slow down food rescue and kept only what saves meals.
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
-                <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">Same colors</span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-1.5 text-xs font-semibold text-secondary">Different layout</span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent">Consistent UI</span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">Provider focused</span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-3 py-1.5 text-xs font-semibold text-secondary">Receiver simple</span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent">Impact first</span>
               </div>
             </div>
 

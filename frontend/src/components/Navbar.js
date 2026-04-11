@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Leaf, Menu, X, ShoppingCart, Bell } from "lucide-react";
+import { Leaf, Menu, X, ShoppingCart, Bell, LogOutIcon } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
@@ -131,10 +131,11 @@ export default function Navbar() {
 
             {!isLoading && isAuthenticated ? (
               <button
+              title="Logout"
                 onClick={handleLogout}
                 className="hidden md:inline-flex px-3.5 py-2 rounded-lg text-sm font-medium text-foreground/75 hover:text-foreground hover:bg-muted transition-all duration-200"
               >
-                Logout
+                < LogOutIcon/>
               </button>
             ) : null}
 
