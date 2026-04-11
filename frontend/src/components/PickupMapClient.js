@@ -174,7 +174,17 @@ export default function PickupMapClient({ initialFoodId = null }) {
                   <div className="space-y-1">
                     <p className="font-semibold">{item.name}</p>
                     <p className="text-xs">Provider: {item.provider}</p>
-                    <p className="text-xs">{item.location}</p>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${Number(item.providerLatitude)},${Number(item.providerLongitude)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:text-primary/80 underline"
+                    >
+                      Open in Google Maps
+                    </a>
+                    <p className="text-[11px] text-muted-foreground">
+                      {Number(item.providerLatitude).toFixed(5)}, {Number(item.providerLongitude).toFixed(5)}
+                    </p>
                   </div>
                 </Popup>
               </Marker>

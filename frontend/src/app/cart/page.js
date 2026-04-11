@@ -225,7 +225,7 @@ export default function CartPage() {
                       Submitting claims...
                     </span>
                   ) : (
-                    "Complete Pickups"
+                    "Claim & Order"
                   )}
                 </button>
                 <Link

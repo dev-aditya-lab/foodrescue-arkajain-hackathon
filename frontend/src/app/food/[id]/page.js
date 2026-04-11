@@ -103,6 +103,8 @@ export default function FoodDetailPage({ params }) {
     : null;
   const providerPhone = String(item.providerPhone || "").trim();
   const providerEmail = String(item.providerEmail || "").trim();
+  const hasEstimatedMeals = Number.isFinite(Number(item.estimatedMeals));
+  const hasEstimatedWeightKg = Number.isFinite(Number(item.estimatedWeightKg));
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 animate-fade-in">
@@ -157,7 +159,7 @@ export default function FoodDetailPage({ params }) {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-muted/50 rounded-xl p-4 space-y-1">
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                   Quantity
@@ -185,7 +187,33 @@ export default function FoodDetailPage({ params }) {
                     : ""}
                 </p>
               </div>
+              {hasEstimatedMeals ? (
+                <div className="bg-muted/50 rounded-xl p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Estimated Meals Served
+                  </p>
+                  <p className="text-lg font-bold text-foreground">
+                    {Number(item.estimatedMeals)}
+                  </p>
+                </div>
+              ) : null}
+              {hasEstimatedWeightKg ? (
+                <div className="bg-muted/50 rounded-xl p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Estimated Total Weight
+                  </p>
+                  <p className="text-lg font-bold text-foreground">
+                    {`${Number(item.estimatedWeightKg).toFixed(2)} kg`}
+                  </p>
+                </div>
+              ) : null}
             </div>
+
+            {!hasEstimatedMeals && !hasEstimatedWeightKg ? (
+              <p className="text-xs text-muted-foreground -mt-1">
+                Impact estimate not provided for this listing.
+              </p>
+            ) : null}
 
             {/* Location & Time */}
             <div className="space-y-3 pt-2">

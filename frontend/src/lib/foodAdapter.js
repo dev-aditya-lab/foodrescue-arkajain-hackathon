@@ -25,6 +25,8 @@ export function mapFoodFromApi(item) {
     foodType: item.foodType,
     offerType: item.offerType || "donation",
     discountedPrice: item.discountedPrice ?? null,
+    estimatedMeals: item.estimatedMeals ?? null,
+    estimatedWeightKg: item.estimatedWeightKg ?? null,
     provider: providerName,
     providerPhone: item.provider?.phone || "-",
     providerEmail: item.provider?.email || "-",
