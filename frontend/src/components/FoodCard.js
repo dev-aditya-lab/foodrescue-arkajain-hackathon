@@ -5,6 +5,7 @@ import { Clock, MapPin, Apple, Phone, Mail, ShoppingCart, Check } from "lucide-r
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { buildGoogleMapsLink } from "@/lib/mapLinks";
 
 export default function FoodCard({
   id,
@@ -17,6 +18,8 @@ export default function FoodCard({
   provider,
   providerPhone,
   providerEmail,
+  providerLatitude,
+  providerLongitude,
   pickupTime,
   foodType,
   offerType,
@@ -43,6 +46,8 @@ export default function FoodCard({
       provider,
       providerPhone,
       providerEmail,
+      providerLatitude,
+      providerLongitude,
       image,
       pickupTime,
       foodType,
@@ -64,6 +69,7 @@ export default function FoodCard({
     expiryTime < 60
       ? `${expiryTime}m left`
       : `${Math.round(expiryTime / 60)}h left`;
+  const googleMapsUrl = buildGoogleMapsLink(providerLatitude, providerLongitude);
 
   return (
     <Link href={`/food/${id}`} className="block group">
@@ -119,7 +125,21 @@ export default function FoodCard({
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 text-secondary shrink-0" />
-              <span>{Number.isFinite(distance) ? `${distance.toFixed(1)} km away` : location}</span>
+              {Number.isFinite(distance) ? (
+                <span>{`${distance.toFixed(1)} km away`}</span>
+              ) : googleMapsUrl ? (
+                <a
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80 underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Open in Google Maps
+                </a>
+              ) : (
+                <span>Location unavailable</span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Clock className="w-3.5 h-3.5 shrink-0" />

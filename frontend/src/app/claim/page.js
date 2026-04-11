@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, PartyPopper, CheckCircle2, XCircle, Clock, RefreshCcw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { fetchMyClaims } from "@/lib/api";
+import { buildGoogleMapsLink } from "@/lib/mapLinks";
 
 function readCheckoutSummary() {
   if (typeof window === "undefined") {
@@ -164,6 +165,12 @@ export default function ClaimPage() {
           ) : (
             <div className="space-y-2">
               {claims.slice(0, 6).map((claim) => (
+                (() => {
+                  const mapsLink = buildGoogleMapsLink(
+                    claim.food?.provider?.latitude,
+                    claim.food?.provider?.longitude
+                  );
+                  return (
                 <div
                   key={claim._id}
                   className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/30 px-4 py-3"
@@ -172,14 +179,30 @@ export default function ClaimPage() {
                     <p className="text-sm font-semibold text-foreground truncate">
                       {claim.food?.title || "Food item"}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {claim.food?.organizationName || claim.food?.location || "Provider location"}
-                    </p>
+                    <div className="text-xs text-muted-foreground">
+                      {claim.food?.organizationName ? (
+                        <span>{claim.food.organizationName}</span>
+                      ) : null}
+                      {mapsLink ? (
+                        <a
+                          href={mapsLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 underline ml-2"
+                        >
+                          Open in Google Maps
+                        </a>
+                      ) : (
+                        <span className={claim.food?.organizationName ? "ml-2" : ""}>Provider location</span>
+                      )}
+                    </div>
                   </div>
                   <span className="text-xs font-semibold rounded-full px-2.5 py-1 bg-primary/10 text-primary capitalize">
                     {claim.status}
                   </span>
                 </div>
+                  );
+                })()
               ))}
             </div>
           )}

@@ -6,6 +6,14 @@ import {
     notifyReceiverClaimStatus,
 } from '../services/notification.service.js';
 
+const foodPopulateWithProvider = {
+    path: 'food',
+    populate: {
+        path: 'provider',
+        select: 'name organizationName latitude longitude'
+    }
+};
+
 export async function createClaim(req, res) {
     if (req.user.role !== 'receiver') {
         return res.status(403).json({ message: 'Only receivers can create claims' });
@@ -63,7 +71,7 @@ export async function createClaim(req, res) {
         }
 
         const populatedClaim = await claimModel.findById(newClaim._id)
-            .populate('food')
+            .populate(foodPopulateWithProvider)
             .populate('receiver', 'name email phone location');
 
         const provider = await userModel.findById(reservedFood.provider).select('email');
@@ -87,7 +95,7 @@ export async function createClaim(req, res) {
 export async function getMyClaims(req, res) {
     try {
         const claims = await claimModel.find({ receiver: req.user._id })
-            .populate('food')
+            .populate(foodPopulateWithProvider)
             .sort({ createdAt: -1 });
 
         return res.status(200).json({ claims });
@@ -107,7 +115,7 @@ export async function getClaimsForMyFood(req, res) {
         const providerFoodIds = providerFood.map((item) => item._id);
 
         const claims = await claimModel.find({ food: { $in: providerFoodIds } })
-            .populate('food')
+            .populate(foodPopulateWithProvider)
             .populate('receiver', 'name email phone location')
             .sort({ createdAt: -1 });
 
@@ -167,7 +175,7 @@ export async function updateClaimStatus(req, res) {
         await claim.food.save();
 
         const updatedClaim = await claimModel.findById(claim._id)
-            .populate('food')
+            .populate(foodPopulateWithProvider)
             .populate('receiver', 'name email phone location');
 
         notifyReceiverClaimStatus({

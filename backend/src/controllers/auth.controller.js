@@ -16,7 +16,7 @@ const authCookieOptions = {
 
 export async function registerUser(req, res){
     //  * @data : { name, phone, email, password, role, providerType (if provider), latitude, longitude, location(optional), organizationName }
-    const { name, phone, email, password, role, providerType, latitude, longitude, location, organizationName } = req.body;
+    const { name, phone, email, password, role, providerType, latitude, longitude, organizationName } = req.body;
     const normalizedEmail = String(email || "").trim().toLowerCase();
     const normalizedPhone = String(phone || "").trim();
     // Validate required fields
@@ -63,7 +63,7 @@ export async function registerUser(req, res){
             providerType,
             latitude: parsedLatitude,
             longitude: parsedLongitude,
-            location: location || null,
+            location: `https://www.google.com/maps/search/?api=1&query=${parsedLatitude},${parsedLongitude}`,
             organizationName
         });
         await newUser.save();

@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { claimFoodItem } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { buildGoogleMapsLink } from "@/lib/mapLinks";
 
 export default function CartPage() {
   const { items, removeItem, clearCart } = useCart();
@@ -137,6 +138,9 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
+            (() => {
+              const googleMapsUrl = buildGoogleMapsLink(item.providerLatitude, item.providerLongitude);
+              return (
             <div
               key={item.id}
               className="glass-card p-5 group"
@@ -162,7 +166,18 @@ export default function CartPage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <MapPin className="w-3.5 h-3.5 text-secondary" />
-                      <span>{item.location}</span>
+                      {googleMapsUrl ? (
+                        <a
+                          href={googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 underline"
+                        >
+                          Open in Google Maps
+                        </a>
+                      ) : (
+                        <span>Location unavailable</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Clock className="w-3.5 h-3.5" />
@@ -196,6 +211,8 @@ export default function CartPage() {
                 </button>
               </div>
             </div>
+              );
+            })()
           ))}
         </div>
 

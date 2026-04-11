@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { buildGoogleMapsLink } from "@/lib/mapLinks";
 
 export default function ProfilePage() {
   const { user, isLoading, role } = useAuth();
+  const mapsLink = buildGoogleMapsLink(user?.latitude, user?.longitude);
 
   if (isLoading) {
     return (
@@ -55,7 +57,15 @@ export default function ProfilePage() {
           </div>
           <div className="bg-muted/50 rounded-lg p-4 sm:col-span-2">
             <p className="text-muted-foreground">Location</p>
-            <p className="font-semibold text-foreground">{user.location || "-"}</p>
+            <p className="font-semibold text-foreground">
+              {mapsLink ? (
+                <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline">
+                  Open in Google Maps
+                </a>
+              ) : (
+                "-"
+              )}
+            </p>
           </div>
           <div className="bg-muted/50 rounded-lg p-4">
             <p className="text-muted-foreground">Latitude</p>

@@ -12,6 +12,7 @@ import {
   removeFoodItem,
   updateClaimStatus,
 } from "@/lib/api";
+import { buildGoogleMapsLink } from "@/lib/mapLinks";
 
 export default function DashboardPage() {
   const { user, role, isLoading: authLoading } = useAuth();
@@ -379,13 +380,35 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {myClaims.slice(0, 12).map((claim) => (
+                (() => {
+                  const mapsLink = buildGoogleMapsLink(
+                    claim.food?.provider?.latitude,
+                    claim.food?.provider?.longitude
+                  );
+                  return (
                 <div key={claim._id} className="border border-border rounded-lg p-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-foreground">{claim.food?.title || "Food Item"}</p>
-                    <p className="text-sm text-muted-foreground">Location: {claim.food?.location || "Unknown"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Location:{" "}
+                      {mapsLink ? (
+                        <a
+                          href={mapsLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 underline"
+                        >
+                          Open in Google Maps
+                        </a>
+                      ) : (
+                        "Unavailable"
+                      )}
+                    </p>
                   </div>
                   <span className="text-xs font-semibold px-2 py-1 rounded-md bg-muted text-foreground capitalize">{claim.status}</span>
                 </div>
+                  );
+                })()
               ))}
             </div>
           )}
