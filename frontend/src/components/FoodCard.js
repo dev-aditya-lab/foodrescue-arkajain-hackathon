@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Clock, MapPin, Apple, Phone, Mail, ShoppingCart, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { buildGoogleMapsLink } from "@/lib/mapLinks";
 
 export default function FoodCard({
@@ -30,6 +30,7 @@ export default function FoodCard({
   const isAvailable = status === "available";
   const { addItem } = useCart();
   const { role } = useAuth();
+  const router = useRouter();
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAddToCart = (e) => {
@@ -71,23 +72,45 @@ export default function FoodCard({
       : `${Math.round(expiryTime / 60)}h left`;
   const googleMapsUrl = buildGoogleMapsLink(providerLatitude, providerLongitude);
 
+  const navigateToDetails = () => {
+    router.push(`/food/${id}`);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      navigateToDetails();
+    }
+  };
+
   return (
-    <Link href={`/food/${id}`} className="block group">
-      <div className="glass-card overflow-hidden h-full flex flex-col">
+    <div
+      className="block group"
+      role="link"
+      tabIndex={0}
+      aria-label={`View details for ${name}`}
+      onClick={navigateToDetails}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="glass-card overflow-hidden h-full flex flex-col cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
         {/* Image Area */}
-        <div className="w-full h-44 bg-linear-to-br from-primary/8 to-secondary/8 flex items-center justify-center relative overflow-hidden">
+        <div className="relative h-60 sm:h-64 bg-linear-to-br from-primary/8 via-white to-secondary/10 overflow-hidden">
           {image ? (
             <img
               src={image}
               alt={name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="flex flex-col items-center gap-2 opacity-40">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-40">
               <Apple className="w-12 h-12 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">{foodType || "Food"}</span>
             </div>
           )}
+
+          <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
 
           {/* Urgency Badge */}
           {isUrgent && (
@@ -174,6 +197,7 @@ export default function FoodCard({
           {role === "receiver" ? (
             <button
               onClick={handleAddToCart}
+              onMouseDown={(event) => event.stopPropagation()}
               disabled={!isAvailable}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 ${
                 !isAvailable
@@ -204,6 +228,6 @@ export default function FoodCard({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

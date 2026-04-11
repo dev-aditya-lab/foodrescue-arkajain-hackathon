@@ -147,8 +147,19 @@ export default function CartPage() {
             >
               <div className="flex gap-4">
                 {/* Thumbnail */}
-                <div className="w-24 h-24 bg-linear-to-br from-primary/8 to-secondary/8 rounded-xl shrink-0 flex items-center justify-center">
-                  <ShoppingBag className="w-8 h-8 text-primary/30" />
+                <div className="w-24 h-24 bg-linear-to-br from-primary/8 via-white to-secondary/10 rounded-xl shrink-0 overflow-hidden relative border border-border/60">
+                  {item.image ? (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${item.image})` }}
+                      role="img"
+                      aria-label={item.name}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <ShoppingBag className="w-8 h-8 text-primary/30" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Details */}

@@ -121,21 +121,26 @@ export default function FoodDetailPage({ params }) {
         <div className="lg:col-span-2 space-y-6">
           {/* Image */}
           <div className="glass-card overflow-hidden">
-            <div className="w-full h-64 sm:h-80 bg-linear-to-br from-primary/8 to-secondary/8 flex items-center justify-center relative">
+            <div
+              className="relative h-72 bg-linear-to-br from-primary/8 via-white to-secondary/10 overflow-hidden"
+              style={{ minHeight: "28rem" }}
+            >
               {item.image ? (
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${item.image})` }}
+                  role="img"
+                  aria-label={item.name}
                 />
               ) : (
-                <div className="text-center space-y-2 opacity-40">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center space-y-2 opacity-40">
                   <span className="text-6xl">🍽️</span>
                   <p className="text-sm font-medium text-muted-foreground">
                     {item.foodType}
                   </p>
                 </div>
               )}
+              <div className="absolute inset-0 bg-linear-to-t from-black/15 via-transparent to-transparent pointer-events-none" />
               {item.expiryTime < 60 && (
                 <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg animate-pulse-slow">
                   ⚡ Urgent
