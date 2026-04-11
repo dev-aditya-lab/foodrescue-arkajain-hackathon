@@ -5,7 +5,9 @@ import {
   ArrowRight,
   ArrowUpRight,
   Clock3,
+  ExternalLink,
   Leaf,
+  Mail,
   MapPinned,
   ShieldCheck,
   Sparkles,
@@ -117,6 +119,17 @@ export default function HomePage() {
         title: "Claim and collect",
         description: "One tap creates the claim, updates the route, and keeps both sides informed.",
       },
+    ],
+    []
+  );
+
+  const teamMembers = useMemo(
+    () => [
+      { name: "Uday Sawaiyan", href: "mailto:udaysawaiyan978@gmail.com", label: "Contact", tone: "primary" },
+      { name: "Aditya Kumar Sharma", href: "mailto:aditya23004@gmial.com", label: "Contact", tone: "secondary" },
+      { name: "Aditya Kumar Gupta", href: "https://www.devaditya.dev/", label: "Portfolio", tone: "accent" },
+      { name: "Kunal Kumar Singh", href: "mailto:skunalkumar759@gmail.com", label: "Contact", tone: "primary" },
+      { name: "Sonali Kumari", href: "mailto:sonaliku2904@gmail.com", label: "Contact", tone: "secondary" },
     ],
     []
   );
@@ -463,6 +476,93 @@ export default function HomePage() {
                 <p className="text-muted-foreground">{stat.label}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="glass-card overflow-hidden">
+            <div className="relative overflow-hidden border-b border-border/70 bg-linear-to-br from-primary/10 via-white to-secondary/10 px-6 py-8 sm:px-8 sm:py-10">
+              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-primary/10 blur-3xl" />
+              <div className="absolute -left-8 bottom-0 w-32 h-32 rounded-full bg-secondary/10 blur-3xl" />
+
+              <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+                <div className="max-w-2xl space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Team</p>
+                  <h2 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
+                    Built by a focused team.
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    The project team is shown here with a cleaner, card-based presentation so visitors can quickly see who is behind the platform and how to reach them.
+                  </p>
+                </div>
+
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-border px-4 py-2 text-sm font-medium text-foreground shadow-sm">
+                  <Users className="w-4 h-4 text-primary" />
+                  5 team members
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {teamMembers.map((member, index) => {
+                  const isExternal = member.href.startsWith("http");
+                  const toneClasses =
+                    member.tone === "primary"
+                      ? "from-white via-white to-primary/5"
+                      : member.tone === "secondary"
+                        ? "from-white via-white to-secondary/5"
+                        : "from-white via-white to-accent/5";
+                  const accentClasses =
+                    member.tone === "primary"
+                      ? "bg-primary/10 text-primary hover:bg-primary/15"
+                      : member.tone === "secondary"
+                        ? "bg-secondary/10 text-secondary hover:bg-secondary/15"
+                        : "bg-accent/10 text-accent hover:bg-accent/15";
+                  return (
+                    <div
+                      key={member.name}
+                      className={`relative overflow-hidden rounded-[1.75rem] border border-border p-5 sm:p-6 bg-linear-to-br ${toneClasses} transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(0,0,0,0.08)] ${index === 2 ? "md:col-span-2 xl:col-span-1" : ""}`}
+                    >
+                      <div className="absolute right-4 top-4 text-6xl font-black text-foreground/5">0{index + 1}</div>
+                      <div className="relative space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${member.tone === "primary" ? "bg-primary/10" : member.tone === "secondary" ? "bg-secondary/10" : "bg-accent/10"}`}>
+                            <span className={`text-sm font-black ${member.tone === "primary" ? "text-primary" : member.tone === "secondary" ? "text-secondary" : "text-accent"}`}>
+                              {member.name
+                                .split(" ")
+                                .map((part) => part[0])
+                                .slice(0, 2)
+                                .join("")}
+                            </span>
+                          </div>
+                          <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            {member.label}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <h3 className="text-xl font-bold text-foreground leading-snug">{member.name}</h3>
+                          <p className="text-sm text-muted-foreground">Team member</p>
+                        </div>
+
+                        <a
+                          href={member.href}
+                          target={isExternal ? "_blank" : undefined}
+                          rel={isExternal ? "noopener noreferrer" : undefined}
+                          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors ${accentClasses}`}
+                        >
+                          {member.label}
+                          {isExternal ? <ExternalLink className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </section>
